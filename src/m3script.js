@@ -16,3 +16,6 @@
    limitations under the License.
  */
 
+function Model() {
+	// TODO:
+}
