@@ -16,6 +16,10 @@
    limitations under the License.
  */
 
-function Model() {
+function Player() {
+	// TODO:
+}
+
+function Figure() {
 	// TODO:
 }

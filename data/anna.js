@@ -2,8 +2,4 @@
  * Anna Tani
  */
 
-function Anna() {
-	// TODO:
-}
-
-Anna.prototype = new Model();
+var anna = new Figure("http://m3itfc.appspot.com/data/anna/");

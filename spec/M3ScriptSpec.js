@@ -1,133 +1,82 @@
 describe("M3Script", function()
 {
-	describe("Scene", function()
+	describe("Player", function()
 	{
-		var scene1 = new Scene("test");
+		var plr = new Player("canvas_id");
 
-		it ("should have an ID", function()
+		it ("is equivalent to HTML Canvas", function()
 		{
-			expect(scene1.id).toEqual("test");
+			expect(plr._canvas).toBeDefined();
 		});
 
-		it ("consists of 'Sequence'", function()
+		it ("can accept parameters", function(){
+			var plr2 = new Player("canvas_id", { msg: "Hello !" });
+			expect(plr2).toBeDefined();
+		});
+
+		plr.setScenario("sample_scenario.js");
+
+		it ("has a 'imgs'(image bank)", function(){
+			expect(plr.imgs).toBeDefined();
+		});
+
+		describe("imgs", function(){
+			it ("can keep images by src", function(){
+				expect(imgs.length).toBeGreaterThan(1);
+				expect(imgs["town1"]).toEqual("img/town1.jpg");
+			});
+		});
+
+		it ("can play 'sequence' step by step", function()
 		{
-			expect(scene1.sequence).toBeDefined();
+			plr.next();
+			expect(plr._step).toEqual(1);
 		});
 
-		it ("has a bank", function(){
-			expect(scene1.bank).toBeDefined();
+		it ("can show history", function(){
+			plr.history();
 		});
 
-		it ("should have a 'Connector'", function()
+		describe("sequence", function()
 		{
-			expect(scene1.connector).toBeDefined();
-		});
+			var seq = plr.sequence;
 
-		it ("is a single by default", function(){
-			expect(scene1.connector).toEqual(new Close());
+			it ("can keep a image by src", function(){
+				expect(seq[0]["bg"]).toEqual("img/HNI_0004.MPO");
+			});
+
+			it ("can keep a image by bank", function(){
+				expect(seq[2]["bg"]).toEqual("img/town1.jpg");
+			});
+
+			it ("can keep a image by object", function(){
+				expect(seq[0]["l1"]).toBeDefined();
+			});
+
+			/*
+			it ("can keep a model by object", function(){
+			});
+			*/
+
+			it ("can keep a audio by src", function(){
+				expect(seq[0]["audio"]).toBeDefined();
+			});
+
+			it ("can keep resources continuously", function(){
+				expect(seq[1]["bg"]).toEqual("img/HNI_0004.MPO");
+				expect(seq[1]["audio"]).toBeDefined();
+			});
 		});
 	});
 
-	describe("Connector", function()
-	{
-		it ("can get next scene", function(){
-			var connect = new Connector();
-			expect(connect.getNextScene()).toBeDefined();
-		});
-
-		describe("Close", function(){
-			var connect = new Close();
-			expect(connect.getNextScene()).toBeNull();
-		});
-
-		describe("Jump", function(){
-			var connect = new Jump("scene2");
-			expect(connect.getNextScene()).toEqual("scene2");
-		});
-
-		describe("Choice", function(){
-			var connect = new Choice();
-			connect.addMessage("Which do you like ?");
-			connect.addOption("Coffee", "scene2");
-			connect.addOption("Tea", "scene3");
-			connect.addOption("Ice water", "scene4");
-			expect(connect.getNextScene(0)).toEqual("scene2");
-		});
-
-		describe("If", function(){
-			var cond = function(value) { (value > 50) ? true : false; };
-			var connect = new If(cond, "scene2", "scene3");
-			expect(connect.getNextScene(60)).toEqual("scene2");
-		});
-	});
-
-	describe("Sequence", function()
-	{
-		var scene = new Scene("test");
-		var seq = scene.sequence;
-
-		it ("should be zero length at first", function(){
-			expect($.isArray(seq)).toBeTruthy();
-			expect(seq.length).toEqual(0);
-		});
-
-		it ("can add a new one", function(){
-			var new_seq = seq.getNext();
-			expect(seq.length).toEqual(1);
-			expect(new_seq).toBeDefined();
-		});
-
-		it ("can keep a image by src", function(){
-			seq[0].addImage("bg/background01.png", TO_BG);
-			expect(seq[0].getResources().length).toEqual(1);
-		});
-
-		it ("can keep a image by object", function(){
-			var anna = new Anna();
-			seq[0].addImage(anna, TO_L1);
-			expect(seq[0].getResources().length).toEqual(2);
-		});
-
-		it ("can keep a model by object", function(){
-			var miku = new Miku();
-			seq[0].addModel(miku, TO_L2);
-			expect(seq[0].getResources().length).toEqual(3);
-		});
-
-		it ("can keep a audio by src", function(){
-			seq[0].addAudio("bgm/bgm01.mp3");
-			expect(seq[0].getResources().length).toEqual(4);
-		});
-
-		it ("can keep several resources at once", function(){
-			var miku = new Miku();
-			var anna = new Anna();
-			var new_seq = seq.getNext()
-				.addImage("bg/background01.png", TO_BG)
-				.addModel(miku.stand().withSmile(), TO_L1, { position: right })
-				.addImage(anna.on("standing"), TO_L2, { position: left });
-			expect(new_seq.getResources().length).toEqual(3);
-		});
-
-		it ("can keep resources by continuance", function(){
-			var new_seq = seq.getContinuance();
-			expect(new_seq.getResources().length).toEqual(3);
-			expect(seq.length).toEqual(3);
-		});
-
-		it ("should be in order", function()
-		{
-			// TODO:
-		});
-	});
-
-	describe("Image", function()
+	describe("Figure", function()
 	{
 		// TODO:
 	});
 
 	describe("Model", function()
 	{
-		// TODO:
+		it ("will support in future version", function(){
+		});
 	});
 });
