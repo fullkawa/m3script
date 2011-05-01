@@ -1,52 +1,68 @@
-describe("M3Script", function()
-{
-	describe("Player", function()
-	{
-		var plr = new Player("canvas_id");
+$(function(){
+console.log("*** test ***");
 
-		it ("is equivalent to HTML Canvas", function()
-		{
-			expect(plr._canvas).toBeDefined();
+describe("M3Script", function(){
+
+	describe("Player", function(){
+
+		p.start();
+
+		describe("Player.screen", function(){
+
+			it ("setup on start", function(){
+				expect(p.screen).toBeDefined();
+			});
+
+			it ("has height and width", function(){
+				expect(p.scrHeight).toEqual(320);
+				expect(p.scrWidth).toEqual(640);
+			});
+
+			it ("has 6 grids for positioning", function(){
+				expect(p.leftX).toEqual(106);
+				expect(p.left2X).toEqual(213);
+				expect(p.centerX).toEqual(320);
+				expect(p.right2X).toEqual(426);
+				expect(p.rightX).toEqual(534);
+			});
 		});
 
-		it ("can accept parameters", function(){
-			var plr2 = new Player("canvas_id", { msg: "Hello !" });
-			expect(plr2).toBeDefined();
+		it ("can load a next scenario", function(){
+			expect(p.loadNextScenario).toBeDefined();
 		});
-
-		plr.setScenario("sample_scenario.js");
 
 		it ("has a 'imgs'(image bank)", function(){
-			expect(plr.imgs).toBeDefined();
+			expect(p.imgs).toBeDefined();
 		});
 
 		describe("imgs", function(){
 			it ("can keep images by src", function(){
-				expect(imgs.length).toBeGreaterThan(1);
-				expect(imgs["town1"]).toEqual("img/town1.jpg");
+				expect(p.imgs.town1).toEqual("img/town1.jpg");
 			});
 		});
 
-		it ("can play 'sequence' step by step", function()
-		{
-			plr.next();
-			expect(plr._step).toEqual(1);
+		it ("can play 'sequence' step by step", function(){
+			expect(p._step).toEqual(1);
+			p.next();
+			expect(p._step).toEqual(2);
 		});
 
 		it ("can show history", function(){
-			plr.history();
+			expect(p.history).toBeDefined();
 		});
 
-		describe("sequence", function()
-		{
-			var seq = plr.sequence;
+		describe("sequence", function(){
+
+			var seq = p.sequence;
 
 			it ("can keep a image by src", function(){
-				expect(seq[0]["bg"]).toEqual("img/HNI_0004.MPO");
+				var path = seq[0]["bg"].src.split("/");
+				expect(path[path.length-1]).toEqual("HNI_0004.MPO");
 			});
 
 			it ("can keep a image by bank", function(){
-				expect(seq[2]["bg"]).toEqual("img/town1.jpg");
+				var path = seq[2]["bg"].src.split("/");
+				expect(path[path.length-1]).toEqual("town1.jpg");
 			});
 
 			it ("can keep a image by object", function(){
@@ -62,21 +78,25 @@ describe("M3Script", function()
 				expect(seq[0]["audio"]).toBeDefined();
 			});
 
+			/*
 			it ("can keep resources continuously", function(){
-				expect(seq[1]["bg"]).toEqual("img/HNI_0004.MPO");
-				expect(seq[1]["audio"]).toBeDefined();
+				var path = p.timeline["bg"].src.split("/");
+				expect(path[path.length-1]).toEqual("HNI_0004.MPO");
+				expect(p.timeline["audio"]).toBeDefined();
 			});
+			*/
 		});
 	});
 
-	describe("Figure", function()
-	{
+	describe("Figure", function(){
+
 		// TODO:
 	});
 
-	describe("Model", function()
-	{
+	describe("Model", function(){
+
 		it ("will support in future version", function(){
 		});
 	});
+});
 });

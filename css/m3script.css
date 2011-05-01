@@ -1,0 +1,32 @@
+.m3screen {
+	position: absolute;
+	left:100px; /* TODO: delete */
+}
+
+.m3layer {
+	position: absolute;
+}
+
+.bg {
+	z-index: 0;
+}
+
+.l1 {
+	z-index: 10;
+}
+
+.l2 {
+	z-index: 20;
+}
+
+.l3 {
+	z-index: 30;
+}
+
+.msg {
+	z-index: 99;
+	background-color: white;
+	opacity: 0.8;
+	border-radius: 0.5em;
+	padding: 0.5em;
+}

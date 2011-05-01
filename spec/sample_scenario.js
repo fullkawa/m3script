@@ -3,58 +3,66 @@
  * @author Furukawa
  */
 
-/* 以下、デフォルト？ */
-// layers で指定した名称がレイヤー名になる
-// 表示順は、下→上　あ、これだと距離が…
-var layers = ["bg", "l1", "l2", "l3", "msg"];
-
-
-/* 以上 */
-
-// キャラ定義(2D)
+// Character Definition
 var anna = new Figure({
-	base_url: "ttp://m3itfc.appspot.com/data/miku/",
-	"standing": "anna_001.png", /* "default"または一番最初のがデフォルト表示に使われる */
+	baseUrl: "http://m3itfc.appspot.com/figure/anna/",
+	"standing": {
+		img: "anna_001.png",
+		ws: 180
+	},
 	"smile": "anna_002.png",
 	"surprised": "anna_003.png"
 });
 
-// キャラ定義(3D)
+// Character Definition (3D)
+/* Model will support in future version
 var anna3d = new Model();
+*/
+
+// Player Definition
+var p = new Player();
 
 // Image Bank
-imgs = {
+p.imgs = {
+	"bg01": "img/HNI_0004.MPO",
 	"town1": "img/town1.jpg",
+	"town1_a": {
+		// i.e., "difference"
+		img: "img/town1_a.jpg",
+		top: 100,
+		left: 200
+	},
 	"street1": "img/street1.jpg"
 };
 
 // Contents
-sequence = [
+p.sequence = [
 	{ // 0
 		transition: "fadein",
-		bg: "img/HNI_0004.MPO",
+		bg: p.img("bg01"),
 		l1: miku.say("Let's go, Anna !"),
 		audio: "bgm/music1.mp3"
 	},
 	{ // 1
-		// 指定のないレイヤは基本的に引き継がれる
-		l1: miku.is.onLeft,
-		l2: anna.say("Where we go ?").onRight
+		l1: miku.is().onLeft(),
+		l2: anna.say("Where we go ?").onRight()
 	},
 	{ // 2
-		bg: imgs["town1"], // バンクからの指定
+		bg: p.img("town1"),
 		l1: miku.wiz("smile"),
 		l2: anna.say("Oh !").act("surprised"),
 		flags: {
 			"town1": "on",
-			"place_cnt": flags["place_cnt"] + 1
+			"place_cnt": function(){
+	  		return this.flags["place_cnt"] + 1;
+	  	}
 		}
 	},
 	{ // 3
-		clear: "all", // 全レイヤクリア
-		msg: "- 終わり -"
+		clear: "all",
+		msg: "- The End -"
 	},
 	{ // 4
-		connection: close
+		connection: p.end()
 	}
 ];
