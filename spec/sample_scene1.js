@@ -3,8 +3,14 @@
  * @author fullkawa
  */
 
+try {
+	enchant('m3');
+}
+catch(e) {
+	alert('M3Script need "enchant.js" ! \n[' + e.toString() + "]");
+}
 var s = new Scenario();
-var miku = new Figure('http://m3itfc.appspot.com/figure?id=miku');
+var miku = new Character('http://m3itfc.appspot.com/figure?id=miku');
 
 s.baseURL = "http://m3itfc.appspot.com/";
 s.images = {
@@ -17,6 +23,9 @@ s.images = {
 		left: 100
 	}
 };
+s.charas = {
+	miku: 'figure?id=miku'
+}
 
 s.sequence = {
 	1: {

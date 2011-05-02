@@ -12,23 +12,12 @@
   You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-try {
-	var lib = document.createElement('script');
-	lib.type = "text/javascript";
-	lib.src = "file:///C:/Users/Furukawa/M3Script/src/enchant.js";
-	document.head.appendChild(lib);
-	lib.onload = function() {
-		enchant('m3');
-	};
-}
-catch(e) {
-	alert('M3Script need "enchant.js" ! \n[' + e.toString() + "]");
-}
+enchant.m3 = {};
 
 /**
  * Utility class to get image url
  */
-var ImageDic = function() {
+enchant.m3.ImageDic = function() {
 	/**
 	 * Base URL
 	 *   If
@@ -43,7 +32,7 @@ var ImageDic = function() {
 	 */
 	this.imgs = {};
 };
-ImageDic.prototype = {
+enchant.m3.ImageDic.prototype = {
 	/**
 	 * @return Array of image URL
 	 */
@@ -61,10 +50,10 @@ ImageDic.prototype = {
 /**
  * Scenario data
  */
-var Scenario = function() {
+enchant.m3.Scenario = function() {
 	this.seqNo = 0;
 };
-Scenario.prototype = {
+enchant.m3.Scenario.prototype = {
 	LAYERS: ["bg", "l1", "l2", "l3"],
 
 	/**
@@ -107,125 +96,84 @@ Scenario.prototype = {
 			alert("ready !");
 		};
 		// TODO: まずはここをベースに作っていく？
+	},
+	img: function(img_id) {
+		// TODO:
 	}
 };
 
-/**
- * Background image, Event CG and so on...
- */
-enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
-	// TODO:
-});
-
-/**
- * Character image
- */
-enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
-	/**
-	 * X value on left position
-	 * @type Number
-	 */
-	leftX: 0,
-
-	/**
-	 * X value on left with 2 characters
-	 * @type Number
-	 */
-	left2X: 0,
-
-	/**
-	 * X value on center position
-	 * @type Number
-	 */
-	centerX: 0,
-
-	/**
-	 * X value on right position
-	 * @type Number
-	 */
-	rightX: 0,
-
-	/**
-	 * X value on right with 2 characters
-	 * @type Number
-	 */
-	right2X: 0,
-
-	initialize: function(setting) {
-		if (typeof(setting) == 'string') {
-			// TODO:URLから読み込み
-		}
-		else if (typeof(setting) == 'object') {
-
-		}
-		else {
-			throw new Error('Figure cannot initialize : typeof(setting) is ' + typeof(setting));
-		}
-		// FIXME: scrWidth ?
-		if (this.scrWidth > 0) {
-			this.centerX = Math.floor(this.scrWidth / 2); // on 3/6
-			this.left2X = Math.floor(this.scrWidth / 3); // on 2/6
-			this.right2X = Math.floor(this.left2X * 2); // on 4/6
-			this.leftX = Math.floor(this.centerX / 3); // on 1/6
-			this.rightX = this.scrWidth - this.leftX; // on 5/6
-		}
-		else {
-			console.warn('scrWidth = 0');
-		}
-
-		for (key in setting) {
-
-			var value = setting[key];
-			if (key == 'baseUrl' || key == 'base_url') {
-				this.baseUrl = value;
-			}
-			else {
-				var imgSrc = this.baseUrl;
-				if (typeof(value) == 'string') {
-					imgSrc += value;
-				}
-				else if (typeof(value) == 'object') {
-					imgSrc += value.img;
-				}
-				else {
-					console.warn('"' + key + ':' + value + '" is not handled.');
-				}
-				if (isImage(imgSrc)) {
-					this.imgs[key] = value;
-					if (this.imgs.length == 1) {
-						this.imgs[Figure.prototype.DEFAULT_ID] = value;
-						this.img = makeLayer(imgSrc);
-						this.imgs[Figure.prototype.DEFAULT_ID].img = this.img;
-					}
-					this.imgs[key].img = imgSrc;
-				}
-				else {
-					console.warn('"' + key + ':' + value + '" is not Image.');
-					// printAllProperties(value);
-				}
-			}
-		}
-		printAllProperties(this.imgs); // FIXME: delete
+enchant.m3.Character = function(setting) {
+	if (typeof(setting) == 'string') {
+		// TODO:URLから読み込み
 	}
-});
-Figure.prototype = {
-		DEFAULT_ID: 'default',
-
+	else if (typeof(setting) == 'object') {
+		// TODO:
+	}
+	else {
+		throw new Error('Figure cannot initialize : typeof(setting) is ' + typeof(setting));
+	}
+//	// FIXME: scrWidth ?
+//	if (this.scrWidth > 0) {
+//		this.centerX = Math.floor(this.scrWidth / 2); // on 3/6
+//		this.left2X = Math.floor(this.scrWidth / 3); // on 2/6
+//		this.right2X = Math.floor(this.left2X * 2); // on 4/6
+//		this.leftX = Math.floor(this.centerX / 3); // on 1/6
+//		this.rightX = this.scrWidth - this.leftX; // on 5/6
+//	}
+//	else {
+//		console.warn('scrWidth = 0');
+//	}
+//
+//	for (key in setting) {
+//
+//		var value = setting[key];
+//		if (key == 'baseUrl' || key == 'base_url') {
+//			this.baseUrl = value;
+//		}
+//		else {
+//			var imgSrc = this.baseUrl;
+//			if (typeof(value) == 'string') {
+//				imgSrc += value;
+//			}
+//			else if (typeof(value) == 'object') {
+//				imgSrc += value.img;
+//			}
+//			else {
+//				console.warn('"' + key + ':' + value + '" is not handled.');
+//			}
+//			if (isImage(imgSrc)) {
+//				this.imgs[key] = value;
+//				if (this.imgs.length == 1) {
+//					this.imgs[Figure.prototype.DEFAULT_ID] = value;
+//					this.img = makeLayer(imgSrc);
+//					this.imgs[Figure.prototype.DEFAULT_ID].img = this.img;
+//				}
+//				this.imgs[key].img = imgSrc;
+//			}
+//			else {
+//				console.warn('"' + key + ':' + value + '" is not Image.');
+//				// printAllProperties(value);
+//			}
+//		}
+//	}
+	printAllProperties(this.imgs); // FIXME: delete
+};
+enchant.m3.Character.prototype = {
 		setImage: function(imgId) {
 			if (imgId == undefined || typeof(imgId) != 'string' || imgId.length == 0) {
-				imgId = Figure.prototype.DEFAULT_ID;
+				imgId = 'default';
 			}
-			if (this.imgs[imgId] != undefined) {
-				var img = this.imgs[imgId].img;
-				if (img instanceof Image) {
-					this.img = img;
-				}
-				else if (typeof(img) == 'string') {
-					this.img = new Image();
-					this.img.src = img;
-					this.imgs[imgId].img = this.img;
-				}
-			}
+//			if (this.imgs[imgId] != undefined) {
+//				var img = this.imgs[imgId].img;
+//				if (img instanceof Image) {
+//					this.img = img;
+//				}
+//				else if (typeof(img) == 'string') {
+//					this.img = new Image();
+//					this.img.src = img;
+//					this.imgs[imgId].img = this.img;
+//				}
+//			}
 		},
 		render: function() {
 			console.debug('this.img is ' + typeof(this.img)); // FIXME: delete
@@ -281,7 +229,22 @@ Figure.prototype = {
 			// TODO:
 			return this;
 		}
-	};
+};
+
+/**
+ * Background image, Event CG and so on...
+ */
+enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
+	// TODO:
+});
+
+/**
+ * Character image
+ */
+enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
+	initialize: function() {
+	}
+});
 
 enchant.m3.Message = enchant.Class.create(enchant.Label, {
 	// TODO:

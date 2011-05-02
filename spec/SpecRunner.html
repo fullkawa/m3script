@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <title>Jasmine Test Runner</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+  <link rel="stylesheet" type="text/css" href="../lib/jasmine-1.0.2/jasmine.css">
+  <script type="text/javascript" src="../lib/jasmine-1.0.2/jasmine.js"></script>
+  <script type="text/javascript" src="../lib/jasmine-1.0.2/jasmine-html.js"></script>
+
+  <!-- include source files here... -->
+  <link rel="stylesheet" type="text/css" href="../blank/css/m3script.css"></script>
+  <script type="text/javascript" src="../lib/enchant.js"></script>
+  <script type="text/javascript" src="../src/m3.enchant.js"></script>
+
+  <!--   default model -->
+<!--
+  <script type="text/javascript" src="http://m3itfc.appspot.com/figure?id=miku"></script>
+-->
+  <!--   test scenario -->
+  <script type="text/javascript" src="../spec/sample_scene1.js"></script>
+<!--
+  <script type="text/javascript" src="../spec/sample_scenario.js"></script>
+-->
+
+  <!-- include spec files here... -->
+  <script type="text/javascript" src="../spec/M3ScriptSpec.js"></script>
+
+</head>
+<body>
+
+<script type="text/javascript">
+  jasmine.getEnv().addReporter(new jasmine.TrivialReporter());
+  jasmine.getEnv().execute();
+</script>
+
+<div id="enchant-stage"></div>
+
+</body>
+</html>
