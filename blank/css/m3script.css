@@ -1,0 +1,8 @@
+
+.msg {
+	z-index: 99;
+	background-color: white;
+	opacity: 0.8;
+	border-radius: 0.5em;
+	padding: 0.5em;
+}
