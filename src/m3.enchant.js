@@ -55,7 +55,9 @@ enchant.m3.ImageDic.prototype = {
  */
 enchant.m3.Scenario = function() {
 	this.imgdic = new ImageDic();
+	this.seq = [];
 	this.seqNo = 0;
+	this._current = {};
 };
 enchant.m3.Scenario.prototype = {
 	LAYERS: ["bg", "l1", "l2", "l3"],
@@ -96,6 +98,9 @@ enchant.m3.Scenario.prototype = {
 		}
 	},
 
+	/**
+	 * play on new game
+	 */
 	start: function() {
 		window.onload = function() {
 			var game = new Game();
@@ -104,20 +109,33 @@ enchant.m3.Scenario.prototype = {
 
 			game.keybind(13, 'a'); // enter key
 			game.keybind(32, 'a'); // space key
+			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
 
-			game.addEventListener(enchant.Event.A_BUTTON_DOWN, function(){
-				// TODO: ボタン押す度にシーンが進む
-			});
-
+			if (this.seq.length == 0) throw new Error('No sequence exists.');
 			game.onload = function() {
-				// TODO: ファーストシーンのセット
+				game.pushScene(this.seq[0]);
 			};
 			game.start();
 		};
 	},
+	/**
+	 * play on existing game
+	 */
+	play: function(game) {
+		if (game == undefined || !(game instanceof Game)) {
+			throw new Error('Argument is not a game instance.');
+		}
+		game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
+
+		if (this.seq.length == 0) throw new Error('No sequence exists.');
+		game.pushScene(this.seq[0]);
+	},
 	img: function(img_id) {
 		// TODO:
 	}
+};
+var playNext = function(){
+	// TODO: ボタン押す度にシーンが進む
 };
 
 enchant.m3.Character = function(setting) {

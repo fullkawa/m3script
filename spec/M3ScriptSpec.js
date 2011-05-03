@@ -32,7 +32,13 @@ describe('M3Script', function(){
 
 	describe('Scenario', function(){
 
-		// TODO:
+		var s = new Scenario();
+		it ('can play on new game.', function(){
+			expect(s.start).toBeDefined();
+		});
+		it ('can play on existing game.', function() {
+			expect(s.play).toBeDefined();
+		});
 	});
 
 	describe('Picture', function(){
