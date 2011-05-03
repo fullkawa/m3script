@@ -54,7 +54,8 @@ enchant.m3.ImageDic.prototype = {
  * Scenario data
  */
 enchant.m3.Scenario = function() {
-	var images, sequence;
+	this.images;
+	var sequence;
 	this.imgdic = new ImageDic();
 	this.seq = [];
 	this.seqNo = 0;
@@ -63,11 +64,12 @@ enchant.m3.Scenario = function() {
 enchant.m3.Scenario.prototype.__defineSetter__("images", function(images) {
 	for (var key in images) {
 		var value = images[key];
-
+		var dic_key = this.imgdic.getUniqueKey(key);
+		var dic_value = getFullURL(value, this.baseURL);
+		this.imgdic.imgs[dic_key] = dic_value;
 	}
-	// TODO: 定義されている画像をすべてImageDicにつっこむ
-	console.debug(images);
-	alert(this instanceof Scenario);
+	console.debug(this.imgdic);
+	alert('set!');
 });
 enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
 	// TODO: Scenarioオブジェクト最初に全部作っちゃう？
