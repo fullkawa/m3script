@@ -19,13 +19,6 @@ enchant.m3 = {};
  */
 enchant.m3.ImageDic = function() {
 	/**
-	 * Base URL
-	 *   If
-	 * @type String
-	 */
-	this.base;
-
-	/**
 	 * Image properties
 	 *   If typeof(value) is 'String', it is URL.
 	 *   If not, key:img is URL and key:top or left is position of 'difference' image
@@ -37,13 +30,23 @@ enchant.m3.ImageDic.prototype = {
 	 * @return Array of image URL
 	 */
 	getURLArray: function() {
-		// TODO:
+		var arr = [];
+		for (key in this.imgs) {
+			arr.push(this.imgs[key]);
+		}
+		return arr;
 	},
 	/**
-	 *
+	 * @return unique dictionary key
 	 */
-	img: function(img_id) {
-		// TODO;
+	getUniqueKey: function(key) {
+		var uniqKey;
+		var suffix = '';
+		while (this.imgs[uniqKey = key + suffix] != undefined) {
+			(suffix.length == 0) ? suffix = 1 : suffix++;
+			if (suffix > 99) throw new Error("Can't get a unique key for '" + key + "'");
+		}
+		return uniqKey;
 	}
 };
 
@@ -51,6 +54,7 @@ enchant.m3.ImageDic.prototype = {
  * Scenario data
  */
 enchant.m3.Scenario = function() {
+	this.imgdic = new ImageDic();
 	this.seqNo = 0;
 };
 enchant.m3.Scenario.prototype = {
@@ -71,7 +75,7 @@ enchant.m3.Scenario.prototype = {
 			// TODO:
 		},
 		set: function() {
-			// TODO:
+			// TODO: 定義されている画像をすべてImageDicにつっこむ
 		}
 	},
 	sequence: {
@@ -79,7 +83,8 @@ enchant.m3.Scenario.prototype = {
 			// TODO:
 		},
 		set: function() {
-			// TODO:
+			// TODO: Scenarioオブジェクト最初に全部作っちゃう？
+			// TODO: 使われている画像をすべてImageDicにつっこむ
 		}
 	},
 	next: {
@@ -87,15 +92,28 @@ enchant.m3.Scenario.prototype = {
 			// TODO:
 		},
 		set: function() {
-			// TODO:
+			// TODO: sequenceとやること同じならわざわざ分けなくても…
 		}
 	},
 
 	start: function() {
 		window.onload = function() {
-			alert("ready !");
+			var game = new Game();
+			var imgUrls = this.imgdic.getURLArray();
+			game.preload(imgUrls);
+
+			game.keybind(13, 'a'); // enter key
+			game.keybind(32, 'a'); // space key
+
+			game.addEventListener(enchant.Event.A_BUTTON_DOWN, function(){
+				// TODO: ボタン押す度にシーンが進む
+			});
+
+			game.onload = function() {
+				// TODO: ファーストシーンのセット
+			};
+			game.start();
 		};
-		// TODO: まずはここをベースに作っていく？
 	},
 	img: function(img_id) {
 		// TODO:
