@@ -102,18 +102,19 @@ enchant.m3.Scenario.prototype = {
 	 * play on new game
 	 */
 	start: function() {
+		var s = this;
 		window.onload = function() {
 			var game = new Game();
-			var imgUrls = this.imgdic.getURLArray();
+			var imgUrls = s.imgdic.getURLArray();
 			game.preload(imgUrls);
 
 			game.keybind(13, 'a'); // enter key
 			game.keybind(32, 'a'); // space key
 			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
 
-			if (this.seq.length == 0) throw new Error('No sequence exists.');
+			if (s.seq.length == 0) throw new Error('No sequence exists.');
 			game.onload = function() {
-				game.pushScene(this.seq[0]);
+				game.pushScene(s.seq[0]);
 			};
 			game.start();
 		};
@@ -135,7 +136,8 @@ enchant.m3.Scenario.prototype = {
 	}
 };
 var playNext = function(){
-	// TODO: ボタン押す度にシーンが進む
+	this.seqNo++;
+	game.replaceScene(this.seq[this.seqNo]);
 };
 
 enchant.m3.Character = function(setting) {
