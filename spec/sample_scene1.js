@@ -23,9 +23,6 @@ s.images = {
 		left: 100
 	}
 };
-s.charas = {
-	miku: 'figure?id=miku'
-}
 
 s.sequence = {
 	1: {

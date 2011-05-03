@@ -1,8 +1,8 @@
 console.log('*** test ***');
 
-describe('M3Script', function(){
+describe('M3Script', function() {
 
-	describe('ImageDic', function(){
+	describe('ImageDic', function() {
 
 		it ('get a unique key by itself.', function() {
 			var imgdic = new ImageDic();
@@ -30,10 +30,10 @@ describe('M3Script', function(){
 		});
 	});
 
-	describe('Scenario', function(){
+	describe('Scenario', function() {
 
 		var s = new Scenario();
-		it ('can play on new game.', function(){
+		it ('can play on new game.', function() {
 			expect(s.start).toBeDefined();
 		});
 		it ('can play on existing game.', function() {
@@ -41,38 +41,63 @@ describe('M3Script', function(){
 		});
 	});
 
-	describe('Picture', function(){
+	describe('Picture', function() {
 
 		// TODO:
 	});
 
-	describe('Figure', function(){
+	describe('Figure', function() {
 
 		// TODO:
 	});
 
-	describe('Message', function(){
+	describe('Message', function() {
 
 		// TODO:
 	});
 
-	describe('Connector', function(){
+	describe('Connector', function() {
 
 		// TODO:
 	});
 
-	describe('Close', function(){
+	describe('Close', function() {
 
 		// TODO:
 	});
 
-	describe('Jump', function(){
+	describe('Jump', function() {
 
 		// TODO:
 	});
 
-	describe('Navigation', function(){
+	describe('Navigation', function() {
 
 		// TODO:
+	});
+
+	describe('Utility Functions', function() {
+
+		it ('can getFullURL', function() {
+			var baseUrl1 = 'http://www.hoge.com/';
+			var baseUrl2 = 'http://www.hoge.com';
+
+			var url1 = 'pic.png';
+			expect(getFullURL(url1)).toEqual('pic.png');
+
+			expect(getFullURL(url1, baseUrl1)).toEqual('http://www.hoge.com/pic.png');
+
+			expect(getFullURL(url1, baseUrl2)).toEqual('http://www.hoge.com/pic.png');
+
+			var url2 = '/pic.png';
+			expect(getFullURL(url2, baseUrl1)).toEqual('http://www.hoge.com/pic.png');
+
+			var url3 = 'http://www.piyo.com/pic.png';
+			expect(getFullURL(url3, baseUrl1)).toEqual('http://www.piyo.com/pic.png');
+		});
+
+		it ('can printAllProperties', function() {
+			expect(printAllProperties).toBeDefined();
+		});
 	});
 });

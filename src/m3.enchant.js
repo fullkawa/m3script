@@ -31,7 +31,7 @@ enchant.m3.ImageDic.prototype = {
 	 */
 	getURLArray: function() {
 		var arr = [];
-		for (key in this.imgs) {
+		for (var key in this.imgs) {
 			arr.push(this.imgs[key]);
 		}
 		return arr;
@@ -54,11 +54,25 @@ enchant.m3.ImageDic.prototype = {
  * Scenario data
  */
 enchant.m3.Scenario = function() {
+	var images, sequence;
 	this.imgdic = new ImageDic();
 	this.seq = [];
 	this.seqNo = 0;
 	this._current = {};
 };
+enchant.m3.Scenario.prototype.__defineSetter__("images", function(images) {
+	for (var key in images) {
+		var value = images[key];
+
+	}
+	// TODO: 定義されている画像をすべてImageDicにつっこむ
+	console.debug(images);
+	alert(this instanceof Scenario);
+});
+enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
+	// TODO: Scenarioオブジェクト最初に全部作っちゃう？
+	// TODO: 使われている画像をすべてImageDicにつっこむ
+});
 enchant.m3.Scenario.prototype = {
 	LAYERS: ["bg", "l1", "l2", "l3"],
 
@@ -71,32 +85,6 @@ enchant.m3.Scenario.prototype = {
 	 */
 	SHOT_TYPES: ['CU', 'BS', 'WS', 'KS', 'FS'],
 	defaultShotType: 'WS',
-
-	images: {
-		get: function() {
-			// TODO:
-		},
-		set: function() {
-			// TODO: 定義されている画像をすべてImageDicにつっこむ
-		}
-	},
-	sequence: {
-		get: function() {
-			// TODO:
-		},
-		set: function() {
-			// TODO: Scenarioオブジェクト最初に全部作っちゃう？
-			// TODO: 使われている画像をすべてImageDicにつっこむ
-		}
-	},
-	next: {
-		get: function() {
-			// TODO:
-		},
-		set: function() {
-			// TODO: sequenceとやること同じならわざわざ分けなくても…
-		}
-	},
 
 	/**
 	 * play on new game
@@ -112,11 +100,13 @@ enchant.m3.Scenario.prototype = {
 			game.keybind(32, 'a'); // space key
 			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
 
-			if (s.seq.length == 0) throw new Error('No sequence exists.');
-			game.onload = function() {
-				game.pushScene(s.seq[0]);
-			};
-			game.start();
+			alert('start !');
+
+//			if (s.seq.length == 0) throw new Error('No sequence exists.');
+//			game.onload = function() {
+//				game.pushScene(s.seq[0]);
+//			};
+//			game.start();
 		};
 	},
 	/**
@@ -162,7 +152,7 @@ enchant.m3.Character = function(setting) {
 //		console.warn('scrWidth = 0');
 //	}
 //
-//	for (key in setting) {
+//	for (var key in setting) {
 //
 //		var value = setting[key];
 //		if (key == 'baseUrl' || key == 'base_url') {
@@ -309,13 +299,35 @@ enchant.m3.Navigation = enchant.Class.create(enchant.m3.Connector, {
  * utility functions
  */
 
+function getFullURL(url, baseUrl) {
+	var fullUrl = url;
+	if (url != undefined && url.length > 0) {
+		if (baseUrl != undefined && baseUrl.length > 0) {
+			if (url.charAt(0) == '/') {
+				fullUrl = url.substring(1, url.length);
+			}
+			if (baseUrl.charAt(baseUrl.length-1) != '/') {
+				baseUrl = baseUrl + "/";
+			}
+
+			if (url.indexOf('://') > 0) {
+				// That url is 'full', so nothing to do.
+			}
+			else {
+				fullUrl = baseUrl + fullUrl;
+			}
+		}
+	}
+	return fullUrl;
+}
+
 function printAllProperties(obj, indent) {
 	if (indent == undefined) {
 		indent = ' ';
 	} else {
 		indent += ' ';
 	}
-	for (key in obj) {
+	for (var key in obj) {
 		if (typeof(obj[key]) == 'function') {
 			console.debug(indent + 'key=' + key + ' is function');
 		}
