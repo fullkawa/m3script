@@ -35,11 +35,33 @@ describe('M3Script', function() {
 	describe('Scenario', function() {
 
 		var s = new Scenario();
+
+		it ('consists of images.', function() {
+			// TODO:
+		});
+
+		it ('consists of sequence', function() {
+			// TODO:
+		});
+
 		it ('can play on new game.', function() {
 			expect(s.start).toBeDefined();
 		});
+
 		it ('can play on existing game.', function() {
 			expect(s.play).toBeDefined();
+		});
+	});
+
+	describe('Character', function() {
+
+		var c = new Character('piyo', {
+			baseUrl: 'http://www.hoge.com/',
+			'smile': 'smile.png'
+		});
+
+		it ('can render.', function() {
+			expect(c.render).toBeDefined();
 		});
 	});
 

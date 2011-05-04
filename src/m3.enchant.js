@@ -41,12 +41,25 @@ enchant.m3.ImageDic.prototype = {
 	 * @param url of image
 	 * @param baseUrl is optional, it added before url
 	 */
-	set: function(key, url, baseUrl) {
-		var fullUrl = getFullURL(url, baseUrl);
-		if (this.urls[key] != undefined && this.urls[key] != fullUrl) {
-			console.warn('key:' + key + " is already registed by other value.");
+	set: function(key, value, baseUrl) {
+		var url;
+		if (typeof(value) == 'string') {
+			url = value;
+		} else {
+			if (value.img != undefined && typeof(value.img) == 'string')
+			url = value.img;
 		}
-		this.urls[key] = fullUrl;
+		if (url != undefined) {
+			var fullUrl = getFullURL(url, baseUrl);
+			if (this.urls[key] != undefined && this.urls[key] != fullUrl) {
+				console.warn('key:' + key + " is already registed by other value.");
+			}
+			this.urls[key] = fullUrl;
+		}
+		else {
+			console.warn('Failed to get url. value is ...');
+			printAllProperties(value);
+		}
 	},
 
 	/**
@@ -132,21 +145,7 @@ var playNext = function(){
 enchant.m3.Scenario.prototype.__defineSetter__("images", function(images) {
 	// Get all image URL
 	for (var key in images) {
-		var value = images[key];
-		var url;
-		if (typeof(value) == 'string') {
-			url = value;
-		} else {
-			if (value.img != undefined && typeof(value.img) == 'string')
-			url = value.img;
-		}
-		if (url != undefined) {
-			this.imgdic.set(key, url, this.baseURL);
-		}
-		else {
-			console.warn('Failed to get url. value is ...');
-			printAllProperties(value);
-		}
+		this.imgdic.set(key, images[key], this.baseURL);
 	}
 });
 enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
@@ -165,24 +164,31 @@ enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
 				}
 				else if (value[layer].render != undefined) {
 					var imginfo = value[layer].render();
-					imgdic.set(imginfo[0], imginfo[1]);
+					imgdic.set(imginfo.key, imginfo.url);
 				}
 			}
 		});
 	}
 });
 
-enchant.m3.Character = function(name, setting) {
-	if (typeof(setting) == 'string') {
-		// TODO:URLから読み込み
+enchant.m3.Character = function(name, definition) {
+	this.name = name;
+	this.definition = definition;
+
+	this.key = '';
+	this.pos = this.POSITION.indexOf('CENTER');
+	this.msg = '';
+
+	this.imgdic = new ImageDic();
+	for (var key in definition) {
+		if (key == 'baseUrl') {
+			// Not image
+		}
+		else {
+			this.imgdic.set(key, definition[key], definition.baseUrl);
+		}
 	}
-	else if (typeof(setting) == 'object') {
-		// TODO:
-	}
-	else {
-		throw new Error('Figure cannot initialize : typeof(setting) is ' + typeof(setting));
-	}
-//	// FIXME: scrWidth ?
+	//	// FIXME: scrWidth ?
 //	if (this.scrWidth > 0) {
 //		this.centerX = Math.floor(this.scrWidth / 2); // on 3/6
 //		this.left2X = Math.floor(this.scrWidth / 3); // on 2/6
@@ -193,110 +199,71 @@ enchant.m3.Character = function(name, setting) {
 //	else {
 //		console.warn('scrWidth = 0');
 //	}
-//
-//	for (var key in setting) {
-//
-//		var value = setting[key];
-//		if (key == 'baseUrl' || key == 'base_url') {
-//			this.baseUrl = value;
-//		}
-//		else {
-//			var imgSrc = this.baseUrl;
-//			if (typeof(value) == 'string') {
-//				imgSrc += value;
-//			}
-//			else if (typeof(value) == 'object') {
-//				imgSrc += value.img;
-//			}
-//			else {
-//				console.warn('"' + key + ':' + value + '" is not handled.');
-//			}
-//			if (isImage(imgSrc)) {
-//				this.imgs[key] = value;
-//				if (this.imgs.length == 1) {
-//					this.imgs[Figure.prototype.DEFAULT_ID] = value;
-//					this.img = makeLayer(imgSrc);
-//					this.imgs[Figure.prototype.DEFAULT_ID].img = this.img;
-//				}
-//				this.imgs[key].img = imgSrc;
-//			}
-//			else {
-//				console.warn('"' + key + ':' + value + '" is not Image.');
-//				// printAllProperties(value);
-//			}
-//		}
-//	}
-	printAllProperties(this.imgs); // FIXME: delete
 };
 enchant.m3.Character.prototype = {
-		setImage: function(imgId) {
-			if (imgId == undefined || typeof(imgId) != 'string' || imgId.length == 0) {
-				imgId = 'default';
-			}
-//			if (this.imgs[imgId] != undefined) {
-//				var img = this.imgs[imgId].img;
-//				if (img instanceof Image) {
-//					this.img = img;
-//				}
-//				else if (typeof(img) == 'string') {
-//					this.img = new Image();
-//					this.img.src = img;
-//					this.imgs[imgId].img = this.img;
-//				}
-//			}
-		},
+		/**
+		 * X postion of character
+		 *   Not a numeric, it is ratio for screen width.
+		 *   'LEFT_EDGE' is on left edge of screen. It shows right half of character.
+		 *   'LEFT', 'CENTER' and 'RIGHT' is position in 3 person.
+		 *   'LEFT2', 'RIGHT2' is postion in 2 person.
+		 */
+		POSITION: ['LEFT_EDGE', 'LEFT', 'LEFT2', 'CENTER', 'RIGHT2', 'RIGHT', 'RIGHT_EDGE'],
+
 		render: function() {
-			// TODO:
-			return ['dummy_key', 'dummy_value'];
+			return {
+				key: this.name + '.' + this.key,
+				url: this.imgdic.urls[this.key],
+				pos: this.pos,
+				msg: this.msg
+			};
 		},
 
 		say: function(msg) {
-			this.setImage(this.curImgId);
-			// TODO:
+			this.msg = msg;
 			return this;
 		},
 		is: function() {
-			// TODO:
 			return this;
 		},
-		act: function(name) {
-			// TODO:
+		act: function(id) {
+			this.key = id;
 			return this;
 		},
-		wiz: function(name) {
-			// TODO:
+		wiz: function(id) {
+			this.key = id;
 			return this;
 		},
 		/**
-		 * left position with 3 people
+		 * left position with 3 person
 		 */
 		onLeft: function(offset) {
-			// TODO:
+			this.pos = this.POSITION.indexOf('LEFT');
 			return this;
 		},
 		/**
-		 * left position with 2 people
+		 * left position with 2 person
 		 */
 		onLeft2: function(offset) {
-			// TODO:
+			this.pos = this.POSITION.indexOf('LEFT2');
 			return this;
 		},
 		onCenter: function(offset) {
-			// TODO:
+			this.pos = this.POSITION.indexOf('CENTER');
 			return this;
 		},
 		/**
-		 * right position with 3 people
+		 * right position with 3 person
 		 */
 		onRight: function(offset) {
-			// TODO:
+			this.pos = this.POSITION.indexOf('RIGHT');
 			return this;
 		},
 		/**
-		 * right position with 2 people
+		 * right position with 2 person
 		 */
 		onRight2: function(offset) {
-			// TODO:
+			this.pos = this.POSITION.indexOf('RIGHT2');
 			return this;
 		}
 };
@@ -312,8 +279,7 @@ enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
  * Character image
  */
 enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
-	initialize: function() {
-	}
+	// TODO:
 });
 
 enchant.m3.Message = enchant.Class.create(enchant.Label, {
