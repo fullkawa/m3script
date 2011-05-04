@@ -10,7 +10,7 @@ catch(e) {
 	alert('M3Script need "enchant.js" ! \n[' + e.toString() + "]");
 }
 var s = new Scenario();
-var miku = new Character('http://m3itfc.appspot.com/figure?id=miku');
+var miku = new Character('miku', 'http://m3itfc.appspot.com/figure?id=miku');
 
 s.baseURL = "http://m3itfc.appspot.com/";
 s.images = {

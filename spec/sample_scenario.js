@@ -122,6 +122,7 @@ window.onload = function() {
 		bg_img.draw(game.assets['http://m3itfc.appspot.com/Bg_512.jpg'], 0, 0, game.width, game.height);
 		bg.image = bg_img;
 
+		console.debug(game.assets['http://m3itfc.appspot.com/figure/miku/miku_00.png']);
 		var l1 = new Sprite(180, 280);
 		l1.image = game.assets['http://m3itfc.appspot.com/figure/miku/miku_00.png'];
 		l1.x = game.width / 2 - 180 / 2;

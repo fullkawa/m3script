@@ -15,15 +15,15 @@
 enchant.m3 = {};
 
 /**
- * Utility class to get image url
+ * Utility class to get image URL
  */
 enchant.m3.ImageDic = function() {
 	/**
 	 * Image properties
-	 *   If typeof(value) is 'String', it is URL.
-	 *   If not, key:img is URL and key:top or left is position of 'difference' image
+	 *   key is name in scenario
+	 *   value is (full) URL
 	 */
-	this.imgs = {};
+	this.urls = {};
 };
 enchant.m3.ImageDic.prototype = {
 	/**
@@ -31,8 +31,8 @@ enchant.m3.ImageDic.prototype = {
 	 */
 	getURLArray: function() {
 		var arr = [];
-		for (var key in this.imgs) {
-			arr.push(this.imgs[key]);
+		for (var key in this.urls) {
+			arr.push(this.urls[key]);
 		}
 		return arr;
 	},
@@ -42,7 +42,7 @@ enchant.m3.ImageDic.prototype = {
 	getUniqueKey: function(key) {
 		var uniqKey;
 		var suffix = '';
-		while (this.imgs[uniqKey = key + suffix] != undefined) {
+		while (this.urls[uniqKey = key + suffix] != undefined) {
 			(suffix.length == 0) ? suffix = 1 : suffix++;
 			if (suffix > 99) throw new Error("Can't get a unique key for '" + key + "'");
 		}
@@ -61,20 +61,6 @@ enchant.m3.Scenario = function() {
 	this.seqNo = 0;
 	this._current = {};
 };
-enchant.m3.Scenario.prototype.__defineSetter__("images", function(images) {
-	for (var key in images) {
-		var value = images[key];
-		var dic_key = this.imgdic.getUniqueKey(key);
-		var dic_value = getFullURL(value, this.baseURL);
-		this.imgdic.imgs[dic_key] = dic_value;
-	}
-	console.debug(this.imgdic);
-	alert('set!');
-});
-enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
-	// TODO: Scenarioオブジェクト最初に全部作っちゃう？
-	// TODO: 使われている画像をすべてImageDicにつっこむ
-});
 enchant.m3.Scenario.prototype = {
 	LAYERS: ["bg", "l1", "l2", "l3"],
 
@@ -102,13 +88,15 @@ enchant.m3.Scenario.prototype = {
 			game.keybind(32, 'a'); // space key
 			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
 
-			alert('start !');
+			// TODO: make Scene object
 
 //			if (s.seq.length == 0) throw new Error('No sequence exists.');
 //			game.onload = function() {
 //				game.pushScene(s.seq[0]);
 //			};
 //			game.start();
+
+			alert('start !');
 		};
 	},
 	/**
@@ -131,8 +119,26 @@ var playNext = function(){
 	this.seqNo++;
 	game.replaceScene(this.seq[this.seqNo]);
 };
+enchant.m3.Scenario.prototype.__defineSetter__("images", function(images) {
+	// Get all image URL
+	for (var key in images) {
+		var value = images[key];
+		var dic_key = this.imgdic.getUniqueKey(key);
+		var dic_value;
+		if (typeof(value) == 'string') {
+			dic_value = getFullURL(value, this.baseURL);
+		} else {
+			if (value.img != undefined && typeof(value.img) == 'string')
+			dic_value = getFullURL(value.img, this.baseURL);
+		}
+		this.imgdic.urls[dic_key] = dic_value;
+	}
+});
+enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
+	// TODO: 使われている画像をすべてImageDicにつっこむ
+});
 
-enchant.m3.Character = function(setting) {
+enchant.m3.Character = function(name, setting) {
 	if (typeof(setting) == 'string') {
 		// TODO:URLから読み込み
 	}
@@ -303,8 +309,8 @@ enchant.m3.Navigation = enchant.Class.create(enchant.m3.Connector, {
 
 function getFullURL(url, baseUrl) {
 	var fullUrl = url;
-	if (url != undefined && url.length > 0) {
-		if (baseUrl != undefined && baseUrl.length > 0) {
+	if (url != undefined && typeof(url) == 'string' && url.length > 0) {
+		if (baseUrl != undefined && typeof(baseUrl) == 'string' && baseUrl.length > 0) {
 			if (url.charAt(0) == '/') {
 				fullUrl = url.substring(1, url.length);
 			}
