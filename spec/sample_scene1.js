@@ -27,7 +27,7 @@ s.images = {
 s.sequence = {
 	1: {
 		transition: 'fadein',
-		bg: s.img('bg01'),
+		bg: 'bg01',
 		l1: miku.say('Hello, world !'),
 		audio: {
 			src: 'audio/tetete.mp3',
@@ -39,18 +39,17 @@ s.sequence = {
 	},
 	3: {
 		transition: 'fadeout',
-		bg: s.img('bg01a'),
+		bg: 'bg01a',
 		l1: miku.wiz('smile'),
 		audio: 'audio/se01.mp3'
 	},
 	4: {
 		clear: 'all',
 		msg: '- THE END -'
+	},
+	5: {
+		linkTo: '' // TODO:
 	}
-};
-
-s.next = {
-	linkTo: '' // TODO:
 };
 
 s.start();

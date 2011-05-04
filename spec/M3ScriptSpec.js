@@ -4,6 +4,7 @@ describe('M3Script', function() {
 
 	describe('ImageDic', function() {
 
+		/* TODO: delete
 		it ('get a unique key by itself.', function() {
 			var imgdic = new ImageDic();
 			var key1 = imgdic.getUniqueKey('hoge');
@@ -17,6 +18,7 @@ describe('M3Script', function() {
 			var key3 = imgdic.getUniqueKey('hoge');
 			expect(key3).toEqual('hoge2');
 		});
+		*/
 
 		it ('produce image urls for Game.preload.', function() {
 			var imgdic = new ImageDic();

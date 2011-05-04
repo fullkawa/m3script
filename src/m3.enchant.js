@@ -18,25 +18,11 @@ enchant.m3 = {};
  * Utility class to get image URL
  */
 enchant.m3.ImageDic = function() {
-	/**
-	 * Image properties
-	 *   key is name in scenario
-	 *   value is (full) URL
-	 */
 	this.urls = {};
 };
 enchant.m3.ImageDic.prototype = {
 	/**
-	 * @return Array of image URL
-	 */
-	getURLArray: function() {
-		var arr = [];
-		for (var key in this.urls) {
-			arr.push(this.urls[key]);
-		}
-		return arr;
-	},
-	/**
+	 * @deprecated use 'set' method TODO: delete this method
 	 * @return unique dictionary key
 	 */
 	getUniqueKey: function(key) {
@@ -47,6 +33,31 @@ enchant.m3.ImageDic.prototype = {
 			if (suffix > 99) throw new Error("Can't get a unique key for '" + key + "'");
 		}
 		return uniqKey;
+	},
+
+	/**
+	 * Set image URL
+	 * @param key is name in scenario
+	 * @param url of image
+	 * @param baseUrl is optional, it added before url
+	 */
+	set: function(key, url, baseUrl) {
+		var fullUrl = getFullURL(url, baseUrl);
+		if (this.urls[key] != undefined && this.urls[key] != fullUrl) {
+			console.warn('key:' + key + " is already registed by other value.");
+		}
+		this.urls[key] = fullUrl;
+	},
+
+	/**
+	 * @return Array of image URL
+	 */
+	getURLArray: function() {
+		var arr = [];
+		for (var key in this.urls) {
+			arr.push(this.urls[key]);
+		}
+		return arr;
 	}
 };
 
@@ -54,14 +65,15 @@ enchant.m3.ImageDic.prototype = {
  * Scenario data
  */
 enchant.m3.Scenario = function() {
-	this.images;
-	var sequence;
+	var images, sequence;
 	this.imgdic = new ImageDic();
 	this.seq = [];
 	this.seqNo = 0;
 	this._current = {};
 };
 enchant.m3.Scenario.prototype = {
+	MAX_SEQUENCE_NO: 999,
+
 	LAYERS: ["bg", "l1", "l2", "l3"],
 
 	/**
@@ -82,6 +94,7 @@ enchant.m3.Scenario.prototype = {
 		window.onload = function() {
 			var game = new Game();
 			var imgUrls = s.imgdic.getURLArray();
+			console.debug(s.imgdic.urls); // FIXME: delete
 			game.preload(imgUrls);
 
 			game.keybind(13, 'a'); // enter key
@@ -110,9 +123,6 @@ enchant.m3.Scenario.prototype = {
 
 		if (this.seq.length == 0) throw new Error('No sequence exists.');
 		game.pushScene(this.seq[0]);
-	},
-	img: function(img_id) {
-		// TODO:
 	}
 };
 var playNext = function(){
@@ -123,19 +133,43 @@ enchant.m3.Scenario.prototype.__defineSetter__("images", function(images) {
 	// Get all image URL
 	for (var key in images) {
 		var value = images[key];
-		var dic_key = this.imgdic.getUniqueKey(key);
-		var dic_value;
+		var url;
 		if (typeof(value) == 'string') {
-			dic_value = getFullURL(value, this.baseURL);
+			url = value;
 		} else {
 			if (value.img != undefined && typeof(value.img) == 'string')
-			dic_value = getFullURL(value.img, this.baseURL);
+			url = value.img;
 		}
-		this.imgdic.urls[dic_key] = dic_value;
+		if (url != undefined) {
+			this.imgdic.set(key, url, this.baseURL);
+		}
+		else {
+			console.warn('Failed to get url. value is ...');
+			printAllProperties(value);
+		}
 	}
 });
 enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
-	// TODO: 使われている画像をすべてImageDicにつっこむ
+	// Get all image URL
+	for (var key in sequence) {
+		var value = sequence[key];
+		var imgdic = this.imgdic;
+		enchant.m3.Scenario.prototype.LAYERS.forEach(function(layer) {
+			if (value[layer] != undefined) {
+				if (typeof(value[layer]) == 'string') {
+					// Got already, but...
+					if (imgdic.urls[value[layer]] == undefined) {
+						console.warn('Not regist image URL in s.images; sequence: '
+							+ key + ' > ' + layer + ', name: ' + value[layer]);
+					}
+				}
+				else if (value[layer].render != undefined) {
+					var imginfo = value[layer].render();
+					imgdic.set(imginfo[0], imginfo[1]);
+				}
+			}
+		});
+	}
 });
 
 enchant.m3.Character = function(name, setting) {
@@ -212,8 +246,8 @@ enchant.m3.Character.prototype = {
 //			}
 		},
 		render: function() {
-			console.debug('this.img is ' + typeof(this.img)); // FIXME: delete
-			return this.img;
+			// TODO:
+			return ['dummy_key', 'dummy_value'];
 		},
 
 		say: function(msg) {
