@@ -32,7 +32,7 @@ s.images = {
 	'bg01': 'Bg_512.jpg',
 	'bg01a': {
 		base: 'bg01',
-		img: 'Bg_512_1.jpg',
+		img: 'Bg_512_1.png',
 		top: 200,
 		left: 100
 	}

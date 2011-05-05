@@ -78,11 +78,11 @@ enchant.m3.ImageDic.prototype = {
  * Scenario data
  */
 enchant.m3.Scenario = function() {
-	var images, sequence;
+	this._sequence;
+	this._game;
 	this.imgdic = new ImageDic();
-	this.seq = [];
-	this.seqNo = 0;
-	this._current = {};
+	//this.seq = [];
+	//this.seqNo = 0;
 };
 enchant.m3.Scenario.prototype = {
 	MAX_SEQUENCE_NO: 999,
@@ -105,24 +105,56 @@ enchant.m3.Scenario.prototype = {
 	start: function() {
 		var s = this;
 		window.onload = function() {
-			var game = new Game();
-			var imgUrls = s.imgdic.getURLArray();
-			console.debug(s.imgdic.urls); // FIXME: delete
-			game.preload(imgUrls);
+			s._game = new Game();
+			var game = s._game;
+			game.seq = [];
+			game.seqNo = 0;
 
 			game.keybind(13, 'a'); // enter key
 			game.keybind(32, 'a'); // space key
 			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
+			game.addEventListener('click', playNext);
 
-			// TODO: make Scene object
+			var imgUrls = s.imgdic.getURLArray();
+			game.preload(imgUrls);
 
-//			if (s.seq.length == 0) throw new Error('No sequence exists.');
-//			game.onload = function() {
-//				game.pushScene(s.seq[0]);
-//			};
-//			game.start();
+			game.onload = function() {
+				var sps = {};
+				for (var i = 1; i <= s.MAX_SEQUENCE_NO; i++) {
+					var d = s.sequence[i];
+					if (d != undefined) {
+						sps[i] = {};
+						game.seq.push(new Scene());
+						var sn = game.seq[game.seq.length - 1];
 
-			alert('start !');
+						s.doClear(d, s._current);
+
+						s.LAYERS.forEach(function(layer) {
+							sps[i][layer] = s.getPicture(d, layer);
+							if (sps[i][layer] == undefined) {
+								sps[i][layer] = s.getFigure(d, layer);
+							}
+							if (sps[i][layer] == undefined && sps.length > 1) {
+								sps[i][layer] = sps[i-1][layer];
+							}
+
+							if (sps[i][layer] != undefined) {
+								sn.addChild(sps[i][layer]);
+							}
+						});
+						var msg = new Message(i + ':');
+						//console.debug(msg); // TODO: now
+						sn.addChild(msg);
+					}
+				}
+				if (game.seq.length == 0) {
+					console.warn('No sequence.');
+				}
+				else {
+					game.pushScene(game.seq[0]);
+				}
+			};
+			game.start();
 		};
 	},
 	/**
@@ -132,15 +164,81 @@ enchant.m3.Scenario.prototype = {
 		if (game == undefined || !(game instanceof Game)) {
 			throw new Error('Argument is not a game instance.');
 		}
+		this._game = game;
 		game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
 
-		if (this.seq.length == 0) throw new Error('No sequence exists.');
-		game.pushScene(this.seq[0]);
+		if (game.seq.length == 0) throw new Error('No sequence exists.');
+		game.pushScene(game.seq[0]);
+	},
+
+	/*
+	 * Scenario Specification
+	 */
+
+	doClear: function(d, _current) {
+		var value = d['clear'];
+		if (value != undefined) {
+			if (value == 'all') {
+				_current = {};
+			}
+			else {
+				_current[value] = undefined;
+			}
+		}
+	},
+
+	getPicture: function(d, layer) {
+		var sp;
+		if (layer == 'bg') {
+			var value = d[layer];
+			if (value != undefined) {
+				var imgUrl;
+				if (typeof(value) == 'string') {
+					imgUrl = this.imgdic.urls[value];
+				}
+				else if (value.img != undefined && typeof(value.img) == 'string') {
+					imgUrl = this.imgdic.urls[value.img];
+				}
+				else {
+					console.warn('No image url.');
+				}
+				var img = this._game.assets[imgUrl];
+
+				sp = new Picture(img.width, img.height);
+				sp.image = img;
+				// TODO: サイズ調整
+			}
+		}
+		return sp;
+	},
+
+	getFigure: function(d, layer) {
+		var sp;
+		if (this.LAYERS.indexOf(layer) > 0) {
+			var value = d[layer];
+			if (value != undefined && typeof(value) == 'object' && value.render != undefined) {
+				var imgUrl = value.render()['url'];
+				var img = this._game.assets[imgUrl];
+
+				sp = new Figure(img.width, img.height);
+				sp.image = img;
+				// TODO: もろもろ
+			}
+		}
+		return sp;
 	}
 };
+// TODO: もちっとスマートな形にはならないものか？
 var playNext = function(){
+	// this = game object
 	this.seqNo++;
-	game.replaceScene(this.seq[this.seqNo]);
+	if (this.seq.length > this.seqNo) {
+		this.replaceScene(this.seq[this.seqNo]);
+	} else {
+		this.popScene();
+		this.stop();
+		// alert("Game End");
+	}
 };
 enchant.m3.Scenario.prototype.__defineSetter__("images", function(images) {
 	// Get all image URL
@@ -153,7 +251,7 @@ enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
 	for (var key in sequence) {
 		var value = sequence[key];
 		var imgdic = this.imgdic;
-		enchant.m3.Scenario.prototype.LAYERS.forEach(function(layer) {
+		this.LAYERS.forEach(function(layer) {
 			if (value[layer] != undefined) {
 				if (typeof(value[layer]) == 'string') {
 					// Got already, but...
@@ -169,6 +267,10 @@ enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
 			}
 		});
 	}
+	this._sequence = sequence;
+});
+enchant.m3.Scenario.prototype.__defineGetter__("sequence", function() {
+	return this._sequence;
 });
 
 enchant.m3.Character = function(name, definition) {
@@ -272,18 +374,24 @@ enchant.m3.Character.prototype = {
  * Background image, Event CG and so on...
  */
 enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
-	// TODO:
 });
 
 /**
  * Character image
  */
 enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
-	// TODO:
 });
 
 enchant.m3.Message = enchant.Class.create(enchant.Label, {
-	// TODO:
+	/*
+	initialize: function(text) {
+		this.text = text;
+		this.x = 5;
+		this.y = 320 * 0.9; // FIXME:
+		this.backgroundColor = "#FFFFFF";
+		this.opacity = 0.8;
+	}
+		*/
 });
 
 enchant.m3.Connector = enchant.Class.create(enchant.Scene, {
