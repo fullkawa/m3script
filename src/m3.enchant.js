@@ -207,9 +207,7 @@ enchant.m3.Scenario.prototype = {
 				}
 				var img = this._game.assets[imgUrl];
 
-				sp = new Picture(img.width, img.height);
-				sp.image = img;
-				// TODO: サイズ調整
+				sp = new Picture(this._game.width, this._game.height, img);
 			}
 		}
 		return sp;
@@ -220,10 +218,11 @@ enchant.m3.Scenario.prototype = {
 		if (this.LAYERS.indexOf(layer) > 0) {
 			var value = d[layer];
 			if ((value != undefined) && (value instanceof Character == true)) {
-				var props = value.getProps()
+				var props = value.getProps();
 				if (props != undefined && props.url != undefined) {
 					var img = this._game.assets[props.url];
 					sp = new Figure(img, props);
+					sp.x = Math.floor(this._game.width / 6) * props.xpos - Math.floor(sp.width / 2);
 				}
 			}
 		}
@@ -293,17 +292,6 @@ enchant.m3.Character = function(name, definition) {
 			this.imgdic.set(key, definition[key], definition.baseUrl);
 		}
 	}
-	//	// FIXME: scrWidth ?
-//	if (this.scrWidth > 0) {
-//		this.centerX = Math.floor(this.scrWidth / 2); // on 3/6
-//		this.left2X = Math.floor(this.scrWidth / 3); // on 2/6
-//		this.right2X = Math.floor(this.left2X * 2); // on 4/6
-//		this.leftX = Math.floor(this.centerX / 3); // on 1/6
-//		this.rightX = this.scrWidth - this.leftX; // on 5/6
-//	}
-//	else {
-//		console.warn('scrWidth = 0');
-//	}
 };
 enchant.m3.Character.prototype = {
 		/**
@@ -390,6 +378,33 @@ enchant.m3.Character.prototype = {
  * Background image, Event CG and so on...
  */
 enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
+	initialize: function(width, height, img) {
+		Sprite.call(this, width, height);
+		if (img != undefined) {
+			try {
+				// for full image
+				// TODO: for difference
+				var trimmed_img = new Surface(width, height);
+				var offsetX = 0;
+				var offsetY = 0;
+				var whRatio_src = img.width / img.height;
+				var whRatio_dist = width / height;
+				if (whRatio_dist < whRatio_src) {
+					// cut off both side
+					offsetX = Math.floor((img.width - img.height / whRatio_dist) / 2);
+				} else {
+					// cut off ceil and floor
+					offsetY = Math.floor((img.height - img.width * whRatio_dist) / 2);
+				}
+				trimmed_img.draw(img, offsetX, offsetY, img.width - offsetX * 2, img.height - offsetY * 2, 0, 0, width, height);
+				this.image = trimmed_img;
+			}
+			catch(e) {
+				console.warn(e);
+				this.image = img;
+			}
+		}
+	}
 });
 
 /**
