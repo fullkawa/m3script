@@ -1,8 +1,13 @@
 
-.msg {
+.m3_message {
 	z-index: 99;
 	background-color: white;
 	opacity: 0.8;
 	border-radius: 0.5em;
 	padding: 0.5em;
+	word-wrap: break-word;
+}
+
+.m3_msg_name {
+	font-weight: bold;
 }

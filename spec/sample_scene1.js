@@ -42,7 +42,7 @@ s.sequence = {
 	1: {
 		transition: 'fadein',
 		bg: 'bg01',
-		l1: miku.say('Hello, world !'),
+		l1: miku.say('Hello, world !').as('[ miku ]'),
 		audio: {
 			src: 'audio/tetete.mp3',
 			loop: true

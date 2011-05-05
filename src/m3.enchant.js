@@ -140,11 +140,14 @@ enchant.m3.Scenario.prototype = {
 
 							if (sps[i][layer] != undefined) {
 								sn.addChild(sps[i][layer]);
+								if (sps[i][layer] instanceof Figure) {
+									if (sps[i][layer]['msg'] != undefined && sps[i][layer]['msg'].length > 0) {
+										var msg = new Message(sps[i][layer]['msg'], sps[i][layer]['name'], game.width, game.height);
+										sn.addChild(msg);
+									}
+								}
 							}
 						});
-						var msg = new Message(i + ':');
-						//console.debug(msg); // TODO: now
-						sn.addChild(msg);
 					}
 				}
 				if (game.seq.length == 0) {
@@ -216,13 +219,12 @@ enchant.m3.Scenario.prototype = {
 		var sp;
 		if (this.LAYERS.indexOf(layer) > 0) {
 			var value = d[layer];
-			if (value != undefined && typeof(value) == 'object' && value.render != undefined) {
-				var imgUrl = value.render()['url'];
-				var img = this._game.assets[imgUrl];
-
-				sp = new Figure(img.width, img.height);
-				sp.image = img;
-				// TODO: もろもろ
+			if ((value != undefined) && (value instanceof Character == true)) {
+				var props = value.getProps()
+				if (props != undefined && props.url != undefined) {
+					var img = this._game.assets[props.url];
+					sp = new Figure(img, props);
+				}
 			}
 		}
 		return sp;
@@ -237,7 +239,7 @@ var playNext = function(){
 	} else {
 		this.popScene();
 		this.stop();
-		// alert("Game End");
+		console.info("Game stoped.");
 	}
 };
 enchant.m3.Scenario.prototype.__defineSetter__("images", function(images) {
@@ -260,9 +262,9 @@ enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
 							+ key + ' > ' + layer + ', name: ' + value[layer]);
 					}
 				}
-				else if (value[layer].render != undefined) {
-					var imginfo = value[layer].render();
-					imgdic.set(imginfo.key, imginfo.url);
+				else if (value[layer].getProps != undefined) {
+					var props = value[layer].getProps();
+					imgdic.set(props.key, props.url);
 				}
 			}
 		});
@@ -274,11 +276,12 @@ enchant.m3.Scenario.prototype.__defineGetter__("sequence", function() {
 });
 
 enchant.m3.Character = function(name, definition) {
+	this.id = name;
 	this.name = name;
 	this.definition = definition;
 
 	this.key = '';
-	this.pos = this.POSITION.indexOf('CENTER');
+	this.xpos = this.POSITION.indexOf('CENTER');
 	this.msg = '';
 
 	this.imgdic = new ImageDic();
@@ -304,7 +307,7 @@ enchant.m3.Character = function(name, definition) {
 };
 enchant.m3.Character.prototype = {
 		/**
-		 * X postion of character
+		 * X position of character
 		 *   Not a numeric, it is ratio for screen width.
 		 *   'LEFT_EDGE' is on left edge of screen. It shows right half of character.
 		 *   'LEFT', 'CENTER' and 'RIGHT' is position in 3 person.
@@ -312,11 +315,20 @@ enchant.m3.Character.prototype = {
 		 */
 		POSITION: ['LEFT_EDGE', 'LEFT', 'LEFT2', 'CENTER', 'RIGHT2', 'RIGHT', 'RIGHT_EDGE'],
 
-		render: function() {
+		/**
+		 * @returns character properties
+		 *   key: key of ImageDic
+		 *   url: key of Game.assets
+		 *   xpos: position of character
+		 *   name: name in message dialog
+		 *   msg: message in message dialog
+		 */
+		getProps: function() {
 			return {
-				key: this.name + '.' + this.key,
+				key: this.id + '.' + this.key,
 				url: this.imgdic.urls[this.key],
-				pos: this.pos,
+				xpos: this.xpos,
+				name: this.name,
 				msg: this.msg
 			};
 		},
@@ -325,47 +337,51 @@ enchant.m3.Character.prototype = {
 			this.msg = msg;
 			return this;
 		},
+		as: function(name) {
+			this.name = name;
+			return this;
+		},
 		is: function() {
 			return this;
 		},
-		act: function(id) {
-			this.key = id;
+		act: function(key) {
+			this.key = key;
 			return this;
 		},
-		wiz: function(id) {
-			this.key = id;
+		wiz: function(key) {
+			this.key = key;
 			return this;
 		},
 		/**
 		 * left position with 3 person
 		 */
 		onLeft: function(offset) {
-			this.pos = this.POSITION.indexOf('LEFT');
+			this.xpos = this.POSITION.indexOf('LEFT');
 			return this;
 		},
 		/**
 		 * left position with 2 person
 		 */
 		onLeft2: function(offset) {
-			this.pos = this.POSITION.indexOf('LEFT2');
+			this.xpos = this.POSITION.indexOf('LEFT2');
 			return this;
 		},
 		onCenter: function(offset) {
-			this.pos = this.POSITION.indexOf('CENTER');
+			this.xpos = this.POSITION.indexOf('CENTER');
 			return this;
 		},
 		/**
 		 * right position with 3 person
 		 */
 		onRight: function(offset) {
-			this.pos = this.POSITION.indexOf('RIGHT');
+			this.xpos = this.POSITION.indexOf('RIGHT');
 			return this;
 		},
 		/**
 		 * right position with 2 person
 		 */
 		onRight2: function(offset) {
-			this.pos = this.POSITION.indexOf('RIGHT2');
+			this.xpos = this.POSITION.indexOf('RIGHT2');
 			return this;
 		}
 };
@@ -380,18 +396,52 @@ enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
  * Character image
  */
 enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
+	initialize: function(img, props) {
+		Sprite.call(this, img.width, img.height);
+		this.image = img;
+
+		if (props != undefined) {
+			this.key = props.key;
+			this.url = props.url;
+			this.xpos = props.xpos;
+			this.name = props.name;
+			this.msg = props.msg;
+		}
+	}
 });
 
 enchant.m3.Message = enchant.Class.create(enchant.Label, {
-	/*
-	initialize: function(text) {
-		this.text = text;
+	/**
+	 * @param text {String}	i.e. message
+	 * @param width {Number}
+	 * @param height {Number}
+	 * @param y_ratio {Number}	y = height * y_ratio
+	 */
+	initialize: function(text, name, width, height, y_ratio) {
+		this._msg = '';
+		if (name != undefined) {
+			this._msg = '<span class="m3_msg_name">' + name + '</span><br/>';
+		}
+		if (text != undefined) {
+			this._msg += text;
+		}
+		Label.call(this, this._msg);
+		this._element.className = 'm3_message';
+
 		this.x = 5;
-		this.y = 320 * 0.9; // FIXME:
-		this.backgroundColor = "#FFFFFF";
-		this.opacity = 0.8;
+		if (width != undefined && typeof(width) == 'number' && width > 0) {
+			this.x = Math.floor(width * 0.02);
+			this.width = width - this.x * 2;
+		}
+		this.y = 5;
+		var yr = 0.8;
+		if (y_ratio != undefined && typeof(y_ratio) == 'number' && y_ratio > 0 && y_ratio < 1) {
+			yr = y_ratio;
+		}
+		if (height != undefined && typeof(height) == 'number' && height > 0) {
+			this.y = Math.floor(height * yr);
+		}
 	}
-		*/
 });
 
 enchant.m3.Connector = enchant.Class.create(enchant.Scene, {
