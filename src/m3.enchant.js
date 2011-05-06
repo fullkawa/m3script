@@ -46,7 +46,7 @@ enchant.m3.ImageDic.prototype = {
 		if (typeof(value) == 'string') {
 			url = value;
 		} else {
-			if (value.img != undefined && typeof(value.img) == 'string')
+			if (value != undefined && value.img != undefined && typeof(value.img) == 'string')
 			url = value.img;
 		}
 		if (url != undefined) {
@@ -58,7 +58,7 @@ enchant.m3.ImageDic.prototype = {
 		}
 		else {
 			console.warn('Failed to get url. value is ...');
-			printAllProperties(value);
+			console.warn(value);
 		}
 	},
 
@@ -123,6 +123,7 @@ enchant.m3.Scenario.prototype = {
 				for (var i = 1; i <= s.MAX_SEQUENCE_NO; i++) {
 					var d = s.sequence[i];
 					if (d != undefined) {
+						//console.debug('--- ' + i);
 						sps[i] = {};
 						game.seq.push(new Scene());
 						var sn = game.seq[game.seq.length - 1];
@@ -130,6 +131,7 @@ enchant.m3.Scenario.prototype = {
 						s.doClear(d, s._current);
 
 						s.LAYERS.forEach(function(layer) {
+							//console.debug('- ' + layer);
 							sps[i][layer] = s.getPicture(d, layer);
 							if (sps[i][layer] == undefined) {
 								sps[i][layer] = s.getFigure(d, layer);
@@ -139,11 +141,11 @@ enchant.m3.Scenario.prototype = {
 							}
 
 							if (sps[i][layer] != undefined) {
+								//console.dir(sps[i][layer]);
 								sn.addChild(sps[i][layer]);
 								if (sps[i][layer] instanceof Figure) {
 									if (sps[i][layer]['msg'] != undefined && sps[i][layer]['msg'].length > 0) {
-										var msg = new Message(sps[i][layer]['msg'], sps[i][layer]['name'], game.width, game.height);
-										sn.addChild(msg);
+										sn.addChild(new Message(sps[i][layer]['msg'], sps[i][layer]['name'], game.width, game.height));
 									}
 								}
 							}
@@ -289,7 +291,12 @@ enchant.m3.Character = function(name, definition) {
 			// Not image
 		}
 		else {
-			this.imgdic.set(key, definition[key], definition.baseUrl);
+			var urlKey = this.getURLKey(this.id, key);
+			this.imgdic.set(urlKey, definition[key], definition.baseUrl);
+
+			if (this.imgdic.urls[name] == undefined) {
+				this.imgdic.set(name, definition[key], definition.baseUrl);
+			};
 		}
 	}
 };
@@ -304,6 +311,28 @@ enchant.m3.Character.prototype = {
 		POSITION: ['LEFT_EDGE', 'LEFT', 'LEFT2', 'CENTER', 'RIGHT2', 'RIGHT', 'RIGHT_EDGE'],
 
 		/**
+		 * get shallow copy
+		 */
+		clone: function() {
+			var cln = new Character();
+			for (var key in this) {
+				var value = this[key];
+				if (typeof(value) != 'function') {
+					cln[key] = value;
+				}
+			}
+			return cln;
+		},
+
+		getURLKey: function(id, key) {
+			var urlKey = id;
+			if (key != undefined && key.length > 0) {
+				urlKey += '.' + key;
+			}
+			return urlKey;
+		},
+
+		/**
 		 * @returns character properties
 		 *   key: key of ImageDic
 		 *   url: key of Game.assets
@@ -312,65 +341,67 @@ enchant.m3.Character.prototype = {
 		 *   msg: message in message dialog
 		 */
 		getProps: function() {
-			return {
-				key: this.id + '.' + this.key,
-				url: this.imgdic.urls[this.key],
+			var urlKey = this.getURLKey(this.id, this.key);
+			var props = {
+				key:  urlKey,
+				url: this.imgdic.urls[urlKey],
 				xpos: this.xpos,
 				name: this.name,
 				msg: this.msg
 			};
+			return props;
 		},
 
 		say: function(msg) {
 			this.msg = msg;
-			return this;
+			return this.clone();
 		},
 		as: function(name) {
 			this.name = name;
-			return this;
+			return this.clone();
 		},
 		is: function() {
-			return this;
+			return this.clone();
 		},
 		act: function(key) {
 			this.key = key;
-			return this;
+			return this.clone();
 		},
 		wiz: function(key) {
 			this.key = key;
-			return this;
+			return this.clone();
 		},
 		/**
 		 * left position with 3 person
 		 */
 		onLeft: function(offset) {
 			this.xpos = this.POSITION.indexOf('LEFT');
-			return this;
+			return this.clone();
 		},
 		/**
 		 * left position with 2 person
 		 */
 		onLeft2: function(offset) {
 			this.xpos = this.POSITION.indexOf('LEFT2');
-			return this;
+			return this.clone();
 		},
 		onCenter: function(offset) {
 			this.xpos = this.POSITION.indexOf('CENTER');
-			return this;
+			return this.clone();
 		},
 		/**
 		 * right position with 3 person
 		 */
 		onRight: function(offset) {
 			this.xpos = this.POSITION.indexOf('RIGHT');
-			return this;
+			return this.clone();
 		},
 		/**
 		 * right position with 2 person
 		 */
 		onRight2: function(offset) {
 			this.xpos = this.POSITION.indexOf('RIGHT2');
-			return this;
+			return this.clone();
 		}
 };
 
@@ -428,6 +459,7 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 enchant.m3.Message = enchant.Class.create(enchant.Label, {
 	/**
 	 * @param text {String}	i.e. message
+	 * @param name {String}	name in message dialog
 	 * @param width {Number}
 	 * @param height {Number}
 	 * @param y_ratio {Number}	y = height * y_ratio
@@ -435,10 +467,10 @@ enchant.m3.Message = enchant.Class.create(enchant.Label, {
 	initialize: function(text, name, width, height, y_ratio) {
 		this._msg = '';
 		if (name != undefined) {
-			this._msg = '<span class="m3_msg_name">' + name + '</span><br/>';
+			this._msg = '<span class="m3_msg_name">' + (new String(name)) + '</span><br/>';
 		}
 		if (text != undefined) {
-			this._msg += text;
+			this._msg += new String(text);
 		}
 		Label.call(this, this._msg);
 		this._element.className = 'm3_message';
@@ -500,25 +532,4 @@ function getFullURL(url, baseUrl) {
 		}
 	}
 	return fullUrl;
-}
-
-function printAllProperties(obj, indent) {
-	if (indent == undefined) {
-		indent = ' ';
-	} else {
-		indent += ' ';
-	}
-	for (var key in obj) {
-		if (typeof(obj[key]) == 'function') {
-			console.debug(indent + 'key=' + key + ' is function');
-		}
-		else if (typeof(obj[key]) == 'object') {
-			console.debug(indent + 'key=' + key);
-			printAllProperties(obj[key], indent);
-		}
-		else {
-			console.debug(indent + 'key=' + key + ', value=' + obj[key]);
-		}
-	}
-	console.debug();
 }

@@ -60,6 +60,11 @@ describe('M3Script', function() {
 			'smile': 'smile.png'
 		});
 
+		it ('can get clone object.', function() {
+			var cln = c.clone();
+			expect(c === cln).not.toBeTruthy();
+		});
+
 		it ('can get properties.', function() {
 			expect(c.getProps).toBeDefined();
 		});
@@ -135,10 +140,6 @@ describe('M3Script', function() {
 
 			var url3 = 'http://www.piyo.com/pic.png';
 			expect(getFullURL(url3, baseUrl1)).toEqual('http://www.piyo.com/pic.png');
-		});
-
-		it ('can printAllProperties', function() {
-			expect(printAllProperties).toBeDefined();
 		});
 	});
 });
