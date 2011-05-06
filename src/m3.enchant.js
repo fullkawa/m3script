@@ -154,12 +154,10 @@ enchant.m3.Scenario.prototype = {
 								sp[layer] = s.getFigure(d, layer);
 							}
 							if (sp[layer] == undefined && sp_prev != undefined && sp_prev[layer] != undefined) {
-								console.debug(sp_prev[layer].url);
-								sp[layer] = sp_prev[layer];
+								sp[layer] = sp_prev[layer].clone();
 							}
 
 							if (sp[layer] != undefined) {
-								console.debug(sp[layer].url);
 								sn.addChild(sp[layer]);
 								if (sp[layer] instanceof Figure) {
 									s.addMessage(sp['msg'], sp[layer]['msg'], sp[layer]['name']);
@@ -511,6 +509,15 @@ enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
 				this.url = props.url;
 			}
 		}
+	},
+
+	clone: function() {
+		var cln = new Sprite(this.width, this.height);
+		cln.image = this.image;
+		cln.url = this.url;
+		cln.clone = this.clone;
+
+		return cln;
 	}
 });
 
@@ -527,13 +534,27 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 		this.image = img;
 
 		if (props != undefined) {
-			this.key = props.key;
-			this.url = props.url;
-			this.xpos = props.xpos;
-			this.x = props.x;
-			this.name = props.name;
 			this.msg = props.msg;
+			this.name = props.name;
+			this.url = props.url;
+			this.x = props.x;
+			/* FIXME: これ、いらないんじゃ…
+			this.xpos = props.xpos;
+			this.key = props.key;
+			*/
 		}
+	},
+
+	clone: function() {
+		var cln = new Sprite(this.width, this.height);
+		cln.image = this.image;
+		cln.msg = this.msg;
+		cln.name = this.name;
+		cln.url = this.url;
+		cln.x = this.x;
+		cln.clone = this.clone;
+
+		return cln;
 	}
 });
 
