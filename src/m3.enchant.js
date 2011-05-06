@@ -58,7 +58,7 @@ enchant.m3.ImageDic.prototype = {
 		}
 		else {
 			console.warn('Failed to get url. value is ...');
-			console.warn(value);
+			console.debug(value);
 		}
 	},
 
@@ -81,8 +81,16 @@ enchant.m3.Scenario = function() {
 	this._sequence;
 	this._game;
 	this.imgdic = new ImageDic();
-	//this.seq = [];
-	//this.seqNo = 0;
+
+	/**
+	 * @type {String] is optional, it added before image url
+	 */
+	this.baseURL;
+
+	/**
+	 * @type {String} End Of Sentence
+	 */
+	this.eos;
 };
 enchant.m3.Scenario.prototype = {
 	MAX_SEQUENCE_NO: 999,
@@ -113,18 +121,25 @@ enchant.m3.Scenario.prototype = {
 			game.keybind(13, 'a'); // enter key
 			game.keybind(32, 'a'); // space key
 			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
+			/* FIXME: not work
 			game.addEventListener('click', playNext);
+			*/
 
 			var imgUrls = s.imgdic.getURLArray();
 			game.preload(imgUrls);
 
 			game.onload = function() {
-				var sps = {};
+				var sps = [];
 				for (var i = 1; i <= s.MAX_SEQUENCE_NO; i++) {
 					var d = s.sequence[i];
 					if (d != undefined) {
-						//console.debug('--- ' + i);
-						sps[i] = {};
+						console.debug('--- ' + i);
+						sps.push(new Object());
+						var sp = sps[sps.length - 1];
+						var sp_prev = undefined;
+						if (sps.length > 1) {
+							sp_prev = sps[sps.length - 2];
+						}
 						game.seq.push(new Scene());
 						var sn = game.seq[game.seq.length - 1];
 
@@ -132,22 +147,26 @@ enchant.m3.Scenario.prototype = {
 
 						s.LAYERS.forEach(function(layer) {
 							//console.debug('- ' + layer);
-							sps[i][layer] = s.getPicture(d, layer);
-							if (sps[i][layer] == undefined) {
-								sps[i][layer] = s.getFigure(d, layer);
+							console.debug(i+': '+layer);
+							sp[layer] = s.getPicture(d, layer);
+							if (sp[layer] == undefined) {
+								sp[layer] = s.getFigure(d, layer);
 							}
-							/*
-							if (sps[i][layer] == undefined && sps.length > 1) {
-								sps[i][layer] = sps[i-1][layer];
+							if (sp[layer] == undefined && sp_prev != undefined) {
+								if (sp_prev[layer] != undefined) console.debug(sp_prev[layer].url);
+								sp[layer] = sp_prev[layer];
 							}
-							*/
 
-							if (sps[i][layer] != undefined) {
-								//console.dir(sps[i][layer]);
-								sn.addChild(sps[i][layer]);
-								if (sps[i][layer] instanceof Figure) {
-									if (sps[i][layer]['msg'] != undefined && sps[i][layer]['msg'].length > 0) {
-										sn.addChild(new Message(sps[i][layer]['msg'], sps[i][layer]['name'], game.width, game.height));
+							if (sp[layer] != undefined) {
+								console.debug(sp[layer].url);
+								sn.addChild(sp[layer]);
+								if (sp[layer] instanceof Figure) {
+									if (sp[layer]['msg'] != undefined && sp[layer]['msg'].length > 0) {
+										var text = sp[layer]['msg'];
+										if (s.eos != undefined && s.eos.length > 0) {
+											text += s.eos;
+										}
+										sn.addChild(new Message(text, sp[layer]['name'], game.width, game.height));
 									}
 								}
 							}
@@ -211,7 +230,7 @@ enchant.m3.Scenario.prototype = {
 				}
 				var img = this._game.assets[imgUrl];
 
-				sp = new Picture(this._game.width, this._game.height, img);
+				sp = new Picture(this._game, img, { url: imgUrl });
 			}
 		}
 		return sp;
@@ -225,8 +244,8 @@ enchant.m3.Scenario.prototype = {
 				var props = value.getProps();
 				if (props != undefined && props.url != undefined) {
 					var img = this._game.assets[props.url];
+					props.x = Math.floor(this._game.width / 6) * props.xpos - Math.floor(img.width / 2);
 					sp = new Figure(img, props);
-					sp.x = Math.floor(this._game.width / 6) * props.xpos - Math.floor(sp.width / 2);
 				}
 			}
 		}
@@ -236,12 +255,25 @@ enchant.m3.Scenario.prototype = {
 // TODO: もちっとスマートな形にはならないものか？
 var playNext = function(){
 	// this = game object
-	this.seqNo++;
-	if (this.seq.length > this.seqNo) {
-		this.replaceScene(this.seq[this.seqNo]);
+	console.debug(this);
+	var game;
+	if (this instanceof Game) {
+		game = this;
+	}
+	else if (this instanceof Window) {
+		game = this.s._game;
+	}
+	else {
+		console.warn('Cannot get a game object. "this" is ...');
+		console.debug(this);
+	}
+	game.seqNo++;
+	if (game.seq.length > game.seqNo) {
+		game.replaceScene(game.seq[game.seqNo]);
+		console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
 	} else {
-		this.popScene();
-		this.stop();
+		game.popScene();
+		game.stop();
 		console.info("Game stoped.");
 	}
 };
@@ -421,7 +453,14 @@ enchant.m3.Character.prototype = {
  * Background image, Event CG and so on...
  */
 enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
-	initialize: function(width, height, img) {
+	/**
+	 * @param container means game object
+	 * @param img
+	 * @param props
+	 */
+	initialize: function(container, img, props) {
+		var width = container.width;
+		var height = container.height;
 		Sprite.call(this, width, height);
 		if (img != undefined) {
 			try {
@@ -446,6 +485,9 @@ enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
 				console.warn(e);
 				this.image = img;
 			}
+			if (props != undefined) {
+				this.url = props.url;
+			}
 		}
 	}
 });
@@ -454,6 +496,10 @@ enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
  * Character image
  */
 enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
+	/**
+	 * @param img
+	 * @param props is properties of Character object
+	 */
 	initialize: function(img, props) {
 		Sprite.call(this, img.width, img.height);
 		this.image = img;
@@ -462,6 +508,7 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 			this.key = props.key;
 			this.url = props.url;
 			this.xpos = props.xpos;
+			this.x = props.x;
 			this.name = props.name;
 			this.msg = props.msg;
 		}

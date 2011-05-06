@@ -11,3 +11,8 @@
 .m3_msg_name {
 	font-weight: bold;
 }
+
+.command {
+	cursor: pointer;
+	color: blue;
+}
