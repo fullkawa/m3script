@@ -13,6 +13,7 @@
 }
 
 .command {
+	margin-top: 0.5em;
 	cursor: pointer;
 	color: blue;
 }

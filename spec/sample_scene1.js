@@ -65,6 +65,6 @@ s.sequence = {
 		linkTo: '' // TODO:
 	}
 };
-s.eos = '<br><span class="command" onclick="playNext();"> &gt;&gt;&gt; click to next</span>';
+s.eos = '<span class="command" onclick="playNext();">&nbsp;&gt;&gt;&gt; click to next</span>';
 
 s.start();

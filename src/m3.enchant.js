@@ -90,7 +90,7 @@ enchant.m3.Scenario = function() {
 	/**
 	 * @type {String} End Of Sentence
 	 */
-	this.eos;
+	this.eos = '';
 };
 enchant.m3.Scenario.prototype = {
 	MAX_SEQUENCE_NO: 999,
@@ -145,6 +145,7 @@ enchant.m3.Scenario.prototype = {
 
 						s.doClear(d, s._current);
 
+						sp['msg'] = new Message(game.width, game.height);
 						s.LAYERS.forEach(function(layer) {
 							//console.debug('- ' + layer);
 							console.debug(i+': '+layer);
@@ -152,8 +153,8 @@ enchant.m3.Scenario.prototype = {
 							if (sp[layer] == undefined) {
 								sp[layer] = s.getFigure(d, layer);
 							}
-							if (sp[layer] == undefined && sp_prev != undefined) {
-								if (sp_prev[layer] != undefined) console.debug(sp_prev[layer].url);
+							if (sp[layer] == undefined && sp_prev != undefined && sp_prev[layer] != undefined) {
+								console.debug(sp_prev[layer].url);
 								sp[layer] = sp_prev[layer];
 							}
 
@@ -161,16 +162,16 @@ enchant.m3.Scenario.prototype = {
 								console.debug(sp[layer].url);
 								sn.addChild(sp[layer]);
 								if (sp[layer] instanceof Figure) {
-									if (sp[layer]['msg'] != undefined && sp[layer]['msg'].length > 0) {
-										var text = sp[layer]['msg'];
-										if (s.eos != undefined && s.eos.length > 0) {
-											text += s.eos;
-										}
-										sn.addChild(new Message(text, sp[layer]['name'], game.width, game.height));
-									}
+									s.addMessage(sp['msg'], sp[layer]['msg'], sp[layer]['name']);
 								}
 							}
 						});
+						sp['msg'] = s.getMessage(d, sp['msg']);
+
+						if (sp['msg'].text.length > 0) {
+							s.addMessage(sp['msg'], s.eos);
+							sn.addChild(sp['msg']);
+						}
 					}
 				}
 				if (game.seq.length == 0) {
@@ -250,12 +251,33 @@ enchant.m3.Scenario.prototype = {
 			}
 		}
 		return sp;
+	},
+
+	/**
+	 * @param msg {Message}
+	 * @param text {String}	i.e. message
+	 * @param name {String}	name in message dialog
+	 */
+	addMessage: function(msg, text, name) {
+		if (name != undefined) {
+			msg.text += '<span class="m3_msg_name">' + (new String(name)) + '</span><br/>';
+		}
+		if (text != undefined) {
+			msg.text += new String(text) + '<br/>';
+		}
+	},
+
+	getMessage: function(d, msg) {
+		var text = d['msg'];
+		if (text != undefined) {
+			this.addMessage(msg, text);
+		}
+		return msg;
 	}
 };
 // TODO: もちっとスマートな形にはならないものか？
 var playNext = function(){
 	// this = game object
-	console.debug(this);
 	var game;
 	if (this instanceof Game) {
 		game = this;
@@ -517,21 +539,12 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 
 enchant.m3.Message = enchant.Class.create(enchant.Label, {
 	/**
-	 * @param text {String}	i.e. message
-	 * @param name {String}	name in message dialog
 	 * @param width {Number}
 	 * @param height {Number}
 	 * @param y_ratio {Number}	y = height * y_ratio
 	 */
-	initialize: function(text, name, width, height, y_ratio) {
-		this._msg = '';
-		if (name != undefined) {
-			this._msg = '<span class="m3_msg_name">' + (new String(name)) + '</span><br/>';
-		}
-		if (text != undefined) {
-			this._msg += new String(text);
-		}
-		Label.call(this, this._msg);
+	initialize: function(width, height, y_ratio) {
+		Label.call(this, '');
 		this._element.className = 'm3_message';
 
 		this.x = 5;
@@ -540,7 +553,7 @@ enchant.m3.Message = enchant.Class.create(enchant.Label, {
 			this.width = width - this.x * 2;
 		}
 		this.y = 5;
-		var yr = 0.8;
+		var yr = 0.75;
 		if (y_ratio != undefined && typeof(y_ratio) == 'number' && y_ratio > 0 && y_ratio < 1) {
 			yr = y_ratio;
 		}
