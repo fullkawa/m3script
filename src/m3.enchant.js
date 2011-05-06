@@ -52,7 +52,7 @@ enchant.m3.ImageDic.prototype = {
 		if (url != undefined) {
 			var fullUrl = getFullURL(url, baseUrl);
 			if (this.urls[key] != undefined && this.urls[key] != fullUrl) {
-				console.warn('key:' + key + " is already registed by other value.");
+				console.warn('key:' + key + ' is already registed by other value.');
 			}
 			this.urls[key] = fullUrl;
 		}
@@ -95,7 +95,8 @@ enchant.m3.Scenario = function() {
 enchant.m3.Scenario.prototype = {
 	MAX_SEQUENCE_NO: 999,
 
-	LAYERS: ["bg", "l1", "l2", "l3"],
+	LAYERS: ['bg', 'l1', 'l2', 'l3'],
+	MSG: 'msg',
 
 	/**
 	 * CU: Close Up
@@ -133,7 +134,7 @@ enchant.m3.Scenario.prototype = {
 				for (var i = 1; i <= s.MAX_SEQUENCE_NO; i++) {
 					var d = s.sequence[i];
 					if (d != undefined) {
-						console.debug('--- ' + i);
+						// console.debug('--- ' + i);
 						sps.push(new Object());
 						var sp = sps[sps.length - 1];
 						var sp_prev = undefined;
@@ -143,12 +144,8 @@ enchant.m3.Scenario.prototype = {
 						game.seq.push(new Scene());
 						var sn = game.seq[game.seq.length - 1];
 
-						s.doClear(d, s._current);
-
-						sp['msg'] = new Message(game.width, game.height);
 						s.LAYERS.forEach(function(layer) {
-							//console.debug('- ' + layer);
-							console.debug(i+': '+layer);
+							// console.debug(i+': '+layer);
 							sp[layer] = s.getPicture(d, layer);
 							if (sp[layer] == undefined) {
 								sp[layer] = s.getFigure(d, layer);
@@ -156,19 +153,27 @@ enchant.m3.Scenario.prototype = {
 							if (sp[layer] == undefined && sp_prev != undefined && sp_prev[layer] != undefined) {
 								sp[layer] = sp_prev[layer].clone();
 							}
+						});
 
-							if (sp[layer] != undefined) {
-								sn.addChild(sp[layer]);
-								if (sp[layer] instanceof Figure) {
-									s.addMessage(sp['msg'], sp[layer]['msg'], sp[layer]['name']);
+						sp[s.MSG] = new Message(game.width, game.height);
+						sp[s.MSG] = s.getMessage(d, sp[s.MSG]);
+
+						s.doClear(d, sp);
+
+						for (var layer in sp) {
+							var cld = sp[layer];
+
+							if (cld != undefined) {
+								sn.addChild(cld);
+
+								if (cld instanceof Figure) {
+									s.addMessage(sp[s.MSG], cld[s.MSG], cld['name']);
 								}
 							}
-						});
-						sp['msg'] = s.getMessage(d, sp['msg']);
-
-						if (sp['msg'].text.length > 0) {
-							s.addMessage(sp['msg'], s.eos);
-							sn.addChild(sp['msg']);
+						}
+						if (sp[s.MSG] != undefined && sp[s.MSG].text.length > 0) {
+							s.addMessage(sp[s.MSG], s.eos);
+							sn.addChild(sp[s.MSG]);
 						}
 					}
 				}
@@ -200,14 +205,11 @@ enchant.m3.Scenario.prototype = {
 	 * Scenario Specification
 	 */
 
-	doClear: function(d, _current) {
+	doClear: function(d, sp) {
 		var value = d['clear'];
-		if (value != undefined) {
-			if (value == 'all') {
-				_current = {};
-			}
-			else {
-				_current[value] = undefined;
+		for (var layer in sp) {
+			if ((layer != this.MSG) && (value == 'all' || value == layer)) {
+				sp[layer] = undefined;
 			}
 		}
 	},
@@ -266,8 +268,8 @@ enchant.m3.Scenario.prototype = {
 	},
 
 	getMessage: function(d, msg) {
-		var text = d['msg'];
-		if (text != undefined) {
+		var text = d[this.MSG];
+		if (text != undefined && text.length > 0) {
 			this.addMessage(msg, text);
 		}
 		return msg;
@@ -294,16 +296,16 @@ var playNext = function(){
 	} else {
 		game.popScene();
 		game.stop();
-		console.info("Game stoped.");
+		console.info('Game stoped.');
 	}
 };
-enchant.m3.Scenario.prototype.__defineSetter__("images", function(images) {
+enchant.m3.Scenario.prototype.__defineSetter__('images', function(images) {
 	// Get all image URL
 	for (var key in images) {
 		this.imgdic.set(key, images[key], this.baseURL);
 	}
 });
-enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
+enchant.m3.Scenario.prototype.__defineSetter__('sequence', function(sequence) {
 	// Get all image URL
 	for (var key in sequence) {
 		var value = sequence[key];
@@ -326,7 +328,7 @@ enchant.m3.Scenario.prototype.__defineSetter__("sequence", function(sequence) {
 	}
 	this._sequence = sequence;
 });
-enchant.m3.Scenario.prototype.__defineGetter__("sequence", function() {
+enchant.m3.Scenario.prototype.__defineGetter__('sequence', function() {
 	return this._sequence;
 });
 
@@ -613,7 +615,7 @@ function getFullURL(url, baseUrl) {
 				fullUrl = url.substring(1, url.length);
 			}
 			if (baseUrl.charAt(baseUrl.length-1) != '/') {
-				baseUrl = baseUrl + "/";
+				baseUrl = baseUrl + '/';
 			}
 
 			if (url.indexOf('://') > 0) {
