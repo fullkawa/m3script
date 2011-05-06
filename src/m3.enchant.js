@@ -136,9 +136,11 @@ enchant.m3.Scenario.prototype = {
 							if (sps[i][layer] == undefined) {
 								sps[i][layer] = s.getFigure(d, layer);
 							}
+							/*
 							if (sps[i][layer] == undefined && sps.length > 1) {
 								sps[i][layer] = sps[i-1][layer];
 							}
+							*/
 
 							if (sps[i][layer] != undefined) {
 								//console.dir(sps[i][layer]);
@@ -299,6 +301,7 @@ enchant.m3.Character = function(name, definition) {
 			};
 		}
 	}
+	this._self = this;
 };
 enchant.m3.Character.prototype = {
 		/**
@@ -315,8 +318,8 @@ enchant.m3.Character.prototype = {
 		 */
 		clone: function() {
 			var cln = new Character();
-			for (var key in this) {
-				var value = this[key];
+			for (var key in this._self) {
+				var value = this._self[key];
 				if (typeof(value) != 'function') {
 					cln[key] = value;
 				}
@@ -340,7 +343,7 @@ enchant.m3.Character.prototype = {
 		 *   name: name in message dialog
 		 *   msg: message in message dialog
 		 */
-		getProps: function() {
+		getProps: function(doClearMsg) {
 			var urlKey = this.getURLKey(this.id, this.key);
 			var props = {
 				key:  urlKey,
@@ -354,10 +357,12 @@ enchant.m3.Character.prototype = {
 
 		say: function(msg) {
 			this.msg = msg;
+			this._self.msg = msg;
 			return this.clone();
 		},
 		as: function(name) {
 			this.name = name;
+			this._self.name = name;
 			return this.clone();
 		},
 		is: function() {
@@ -365,10 +370,12 @@ enchant.m3.Character.prototype = {
 		},
 		act: function(key) {
 			this.key = key;
+			this._self.key = key;
 			return this.clone();
 		},
 		wiz: function(key) {
 			this.key = key;
+			this._self.key = key;
 			return this.clone();
 		},
 		/**
@@ -376,6 +383,7 @@ enchant.m3.Character.prototype = {
 		 */
 		onLeft: function(offset) {
 			this.xpos = this.POSITION.indexOf('LEFT');
+			this._self.xpos = this.xpos;
 			return this.clone();
 		},
 		/**
@@ -383,10 +391,12 @@ enchant.m3.Character.prototype = {
 		 */
 		onLeft2: function(offset) {
 			this.xpos = this.POSITION.indexOf('LEFT2');
+			this._self.xpos = this.xpos;
 			return this.clone();
 		},
 		onCenter: function(offset) {
 			this.xpos = this.POSITION.indexOf('CENTER');
+			this._self.xpos = this.xpos;
 			return this.clone();
 		},
 		/**
@@ -394,6 +404,7 @@ enchant.m3.Character.prototype = {
 		 */
 		onRight: function(offset) {
 			this.xpos = this.POSITION.indexOf('RIGHT');
+			this._self.xpos = this.xpos;
 			return this.clone();
 		},
 		/**
@@ -401,6 +412,7 @@ enchant.m3.Character.prototype = {
 		 */
 		onRight2: function(offset) {
 			this.xpos = this.POSITION.indexOf('RIGHT2');
+			this._self.xpos = this.xpos;
 			return this.clone();
 		}
 };
