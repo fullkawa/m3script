@@ -60,9 +60,6 @@ s.sequence = {
 	4: {
 		clear: 'all',
 		msg: '- THE END -'
-	},
-	5: {
-		linkTo: '' // TODO:
 	}
 };
 s.eos = '<span class="command" onclick="playNext();">&nbsp;&gt;&gt;&gt; click to next</span>';

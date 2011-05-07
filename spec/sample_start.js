@@ -3,17 +3,30 @@
  * @author fullkawa
  */
 
+try {
+	enchant('m3');
+}
+catch(e) {
+	alert('M3Script need "enchant.js" ! \n[' + e.toString() + "]");
+}
 var s = new Scenario();
+
+s.baseURL = "http://m3itfc.appspot.com/";
+s.images = {
+	'title': 'img_test/title.jpg'
+};
 
 s.sequence = {
 	1: {
-		bg: 'img_test/title.jpg'
+		bg: 'title'
 	},
 	2: {
-		message: 'What do you do ?',
-		options: {
-		    1: { label: 'Start', linkto: '' }, // TODO: どう指定する？
-		    2: { label: 'Exit', linkto: '' }
+		select: {
+			msg: 'What do you do ?',
+			options: {
+			    1: { label: 'Start', linkTo: 'SpecRunner.html' },
+			    2: { label: 'Exit', linkTo: 'http://www.google.com/' }
+			}
 		}
 	}
 };

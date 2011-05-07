@@ -97,6 +97,7 @@ enchant.m3.Scenario.prototype = {
 
 	LAYERS: ['bg', 'l1', 'l2', 'l3'],
 	MSG: 'msg',
+	SELECT: 'select',
 
 	/**
 	 * CU: Close Up
@@ -164,16 +165,25 @@ enchant.m3.Scenario.prototype = {
 							var cld = sp[layer];
 
 							if (cld != undefined) {
-								sn.addChild(cld);
+								if (layer == s.MSG) {
+									if (cld.text.length > 0) {
+										s.addMessage(cld, s.eos);
+										sn.addChild(cld);
+									}
+								}
+								else {
+									sn.addChild(cld);
+								}
 
 								if (cld instanceof Figure) {
 									s.addMessage(sp[s.MSG], cld[s.MSG], cld['name']);
 								}
 							}
 						}
-						if (sp[s.MSG] != undefined && sp[s.MSG].text.length > 0) {
-							s.addMessage(sp[s.MSG], s.eos);
-							sn.addChild(sp[s.MSG]);
+
+						sp[s.SELECT] = s.getSelection(d);
+						if (sp[s.SELECT] != undefined) {
+							sn.addChild(sp[s.SELECT]);
 						}
 					}
 				}
@@ -189,6 +199,7 @@ enchant.m3.Scenario.prototype = {
 	},
 	/**
 	 * play on existing game
+	 * FIXME: Not test. enchant.js cannot load images on game.
 	 */
 	play: function(game) {
 		if (game == undefined || !(game instanceof Game)) {
@@ -273,6 +284,27 @@ enchant.m3.Scenario.prototype = {
 			this.addMessage(msg, text);
 		}
 		return msg;
+	},
+
+	getSelection: function(d) {
+		var lbl;
+		var slct = d['select'];
+		if (slct != undefined) {
+			var msg = slct['msg'];
+			var opts = slct['options'];
+			if (msg != undefined && opts != undefined) {
+				lbl = new Message(Math.floor(this._game.width / 2), this._game.height, 0.4);
+				lbl.x = this._game.width / 4;
+				lbl.text = msg;
+				for (var i = 1; i <= 9; i++) {
+					var opt = opts[i];
+					if (opt != undefined && opt['label'] != undefined && opt['linkTo'] != undefined) {
+						lbl.text += '<div class="command"><a href="' + opt['linkTo'] + '">' + opt['label'] + '</a></div>';
+					}
+				}
+			}
+		}
+		return lbl;
 	}
 };
 // TODO: もちっとスマートな形にはならないものか？
@@ -562,8 +594,8 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 
 enchant.m3.Message = enchant.Class.create(enchant.Label, {
 	/**
-	 * @param width {Number}
-	 * @param height {Number}
+	 * @param width {Number} of game screen
+	 * @param height {Number} of game screen
 	 * @param y_ratio {Number}	y = height * y_ratio
 	 */
 	initialize: function(width, height, y_ratio) {
