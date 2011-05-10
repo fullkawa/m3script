@@ -82,24 +82,23 @@ describe('M3Script', function() {
 
 	describe('Message', function() {
 
-		// FIXME: strip comment symbol
-//		window.onload = function() {
-//			var game = new Game();
-//			game.onload = function() {
-//				it ('could be a text only.', function() {
-//					var text = 'hoge';
-//					var msg = new Message(text);
-//					expect(msg._msg).toEqual('hoge');
-//				});
-//
-//				it ('could be a name and text.', function() {
-//					var name = 'miku';
-//					var text = '"hoge"';
-//					var msg = new Message(text, name);
-//					expect(msg._msg).toEqual('<span class="m3_msg_name">miku</span><br/>"hoge"');
-//				});
-//			};
-//		};
+		window.onload = function() {
+			var game = new Game();
+			game.onload = function() {
+				it ('could be a text only.', function() {
+					var text = 'hoge';
+					var msg = new Message(text);
+					expect(msg._msg).toEqual('hoge');
+				});
+
+				it ('could be a name and text.', function() {
+					var name = 'miku';
+					var text = '"hoge"';
+					var msg = new Message(text, name);
+					expect(msg._msg).toEqual('<span class="m3_msg_name">miku</span><br/>"hoge"');
+				});
+			};
+		};
 	});
 
 	describe('Connector', function() {

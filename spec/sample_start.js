@@ -24,7 +24,7 @@ s.sequence = {
 		select: {
 			msg: 'What do you do ?',
 			options: {
-			    1: { label: 'Start', linkTo: 'SpecRunner.html' },
+			    1: { label: 'Start', linkTo: 'sample.html?scene1' },
 			    2: { label: 'Exit', linkTo: 'http://www.google.com/' }
 			}
 		}
