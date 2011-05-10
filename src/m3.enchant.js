@@ -371,6 +371,7 @@ enchant.m3.Character = function(name, definition) {
 
 	this.key = '';
 	this.xpos = this.POSITION.indexOf('CENTER');
+	this.xoffset = 0;
 	this.msg = '';
 
 	this.imgdic = new ImageDic();
@@ -470,6 +471,10 @@ enchant.m3.Character.prototype = {
 		onLeft: function(offset) {
 			this.xpos = this.POSITION.indexOf('LEFT');
 			this._self.xpos = this.xpos;
+			if (offset != undefined) {
+				this.xoffset = offset;
+				this._self.xoffset = offset;
+			}
 			return this.clone();
 		},
 		/**
@@ -478,11 +483,19 @@ enchant.m3.Character.prototype = {
 		onLeft2: function(offset) {
 			this.xpos = this.POSITION.indexOf('LEFT2');
 			this._self.xpos = this.xpos;
+			if (offset != undefined) {
+				this.xoffset = offset;
+				this._self.xoffset = offset;
+			}
 			return this.clone();
 		},
 		onCenter: function(offset) {
 			this.xpos = this.POSITION.indexOf('CENTER');
 			this._self.xpos = this.xpos;
+			if (offset != undefined) {
+				this.xoffset = offset;
+				this._self.xoffset = offset;
+			}
 			return this.clone();
 		},
 		/**
@@ -491,6 +504,10 @@ enchant.m3.Character.prototype = {
 		onRight: function(offset) {
 			this.xpos = this.POSITION.indexOf('RIGHT');
 			this._self.xpos = this.xpos;
+			if (offset != undefined) {
+				this.xoffset = offset;
+				this._self.xoffset = offset;
+			}
 			return this.clone();
 		},
 		/**
@@ -499,6 +516,10 @@ enchant.m3.Character.prototype = {
 		onRight2: function(offset) {
 			this.xpos = this.POSITION.indexOf('RIGHT2');
 			this._self.xpos = this.xpos;
+			if (offset != undefined) {
+				this.xoffset = offset;
+				this._self.xoffset = offset;
+			}
 			return this.clone();
 		}
 };

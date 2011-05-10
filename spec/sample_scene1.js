@@ -7,26 +7,26 @@ try {
 	enchant('m3');
 }
 catch(e) {
-	alert('M3Script need "enchant.js" ! \n[' + e.toString() + "]");
+	alert('M3Script need "enchant.js" ! \n[' + e.toString() + ']');
 }
 var s = new Scenario();
 var miku = new Character('miku', {
-	  baseUrl: "http://m3itfc.appspot.com/figure/miku/",
-	  "default": {
-	    img: "miku_00.png",
+	  baseUrl: 'http://m3itfc.appspot.com/figure/miku/',
+	  'default': {
+	    img: 'miku_00.png',
 	    fs: 400,
 	    ks: 306,
 	    ws: 180,
 	    bs: 125,
 	    cu: 100
 	  },
-	  "half_smile": "miku_01.png",
-	  "smile": "miku_02.png",
-	  "slight_bow": "miku_03.png",
-	  "bow": "miku_04.png"
+	  'half_smile': 'miku_01.png',
+	  'smile': 'miku_02.png',
+	  'slight_bow': 'miku_03.png',
+	  'bow': 'miku_04.png'
 });
 
-s.baseURL = "http://m3itfc.appspot.com/";
+s.baseURL = 'http://m3itfc.appspot.com/';
 s.images = {
 	'bg_3D': 'img_test/HNI_0004.MPO',
 	'bg01': 'Bg_512.jpg',
