@@ -309,26 +309,29 @@ enchant.m3.Scenario.prototype = {
 };
 // TODO: もちっとスマートな形にはならないものか？
 var playNext = function(){
-	// this = game object
 	var game;
 	if (this instanceof Game) {
 		game = this;
 	}
-	else if (this instanceof Window) {
+	else if (this.s != undefined) {
+		// 'this' is instance of Window / DOMWindow
 		game = this.s._game;
+	}
+
+	if (game != undefined) {
+		game.seqNo++;
+		if (game.seq.length > game.seqNo) {
+			game.replaceScene(game.seq[game.seqNo]);
+			console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
+		} else {
+			game.popScene();
+			game.stop();
+			console.info('Game stoped.');
+		}
 	}
 	else {
 		console.warn('Cannot get a game object. "this" is ...');
 		console.debug(this);
-	}
-	game.seqNo++;
-	if (game.seq.length > game.seqNo) {
-		game.replaceScene(game.seq[game.seqNo]);
-		console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
-	} else {
-		game.popScene();
-		game.stop();
-		console.info('Game stoped.');
 	}
 };
 enchant.m3.Scenario.prototype.__defineSetter__('images', function(images) {
@@ -593,10 +596,6 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 			this.name = props.name;
 			this.url = props.url;
 			this.x = props.x;
-			/* FIXME: これ、いらないんじゃ…
-			this.xpos = props.xpos;
-			this.key = props.key;
-			*/
 		}
 	},
 

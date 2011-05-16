@@ -6,14 +6,18 @@
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 
   <!-- include source files here... -->
-  <link rel="stylesheet" type="text/css" href="../blank/css/m3script.css"></script>
+  <link rel="stylesheet" type="text/css" href="../blank/css/m3script.css" />
   <script type="text/javascript" src="../lib/enchant.js"></script>
   <script type="text/javascript" src="../src/m3.enchant.js"></script>
 
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.0/jquery.min.js"></script>
 
   <!--   test scenario -->
+	<!--
+  <script type="text/javascript" src="sample_scene1.js"></script>
+	-->
   <script type="text/javascript">
+  	// FIXME: Chrome and Safari cannot load cross domain script.
   	var name;
 		if (location.search != undefined && location.search.length > 1) {
 			name = location.search.substring(1);
