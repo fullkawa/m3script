@@ -643,22 +643,6 @@ enchant.m3.Message = enchant.Class.create(enchant.Label, {
 	}
 });
 
-enchant.m3.Connector = enchant.Class.create(enchant.Scene, {
-	// TODO:
-});
-
-enchant.m3.Close = enchant.Class.create(enchant.m3.Connector, {
-	// TODO:
-});
-
-enchant.m3.Jump = enchant.Class.create(enchant.m3.Connector, {
-	// TODO:
-});
-
-enchant.m3.Navigation = enchant.Class.create(enchant.m3.Connector, {
-	// TODO:
-});
-
 
 /*
  * utility functions
