@@ -378,19 +378,8 @@ enchant.m3.Character = function(name, definition) {
 	this.msg = '';
 
 	this.imgdic = new ImageDic();
-	for (var key in definition) {
-		if (key == 'baseUrl') {
-			// Not image
-		}
-		else {
-			var urlKey = this.getURLKey(this.id, key);
-			this.imgdic.set(urlKey, definition[key], definition.baseUrl);
+	this.addDefinition(definition);
 
-			if (this.imgdic.urls[name] == undefined) {
-				this.imgdic.set(name, definition[key], definition.baseUrl);
-			};
-		}
-	}
 	this._self = this;
 };
 enchant.m3.Character.prototype = {
@@ -402,6 +391,22 @@ enchant.m3.Character.prototype = {
 		 *   'LEFT2', 'RIGHT2' is postion in 2 person.
 		 */
 		POSITION: ['LEFT_EDGE', 'LEFT', 'LEFT2', 'CENTER', 'RIGHT2', 'RIGHT', 'RIGHT_EDGE'],
+
+		addDefinition: function(definition) {
+			for (var key in definition) {
+				if (key == 'baseUrl') {
+					// Not image
+				}
+				else {
+					var urlKey = this.getURLKey(this.id, key);
+					this.imgdic.set(urlKey, definition[key], definition.baseUrl);
+
+					if (this.imgdic.urls[this.name] == undefined) {
+						this.imgdic.set(this.name, definition[key], definition.baseUrl);
+					};
+				}
+			}
+		},
 
 		/**
 		 * get shallow copy
