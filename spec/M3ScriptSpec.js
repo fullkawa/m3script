@@ -1,31 +1,38 @@
-console.log('*** test ***');
-
+try {
+	enchant('m3');
+}
+catch(e) {
+	alert(e);
+}
 describe('M3Script', function() {
 
 	describe('ImageDic', function() {
 
-		/* TODO: delete
-		it ('get a unique key by itself.', function() {
+		it ('can store image URL.', function() {
 			var imgdic = new ImageDic();
-			var key1 = imgdic.getUniqueKey('hoge');
-			expect(key1).toEqual('hoge');
 
-			imgdic.urls[key1] = {};
-			var key2 = imgdic.getUniqueKey('hoge');
-			expect(key2).toEqual('hoge1');
+			// No Base URL
+			imgdic.set('key1', 'img1.png');
 
-			imgdic.urls[key2] = {};
-			var key3 = imgdic.getUniqueKey('hoge');
-			expect(key3).toEqual('hoge2');
+			// Normal
+			var baseUrl = 'http://www.sample.com/img/';
+			imgdic.set('key2', 'img2.png', baseUrl);
+
+			// No slash at last
+			var baseUrl_noSlash = 'http://www.sample.com/img';
+			imgdic.set('key3', 'img3.png', baseUrl_noSlash);
+
+			expect(imgdic.urls['key1']).toEqual('img1.png');
+			expect(imgdic.urls['key2']).toEqual('http://www.sample.com/img/img2.png');
+			expect(imgdic.urls['key3']).toEqual('http://www.sample.com/img/img3.png');
 		});
-		*/
 
 		it ('produce image urls for Game.preload.', function() {
 			var imgdic = new ImageDic();
 			imgdic.urls = {
-				key1: "url1",
-				key2: "url2",
-				key3: "url3"
+				key1: 'url1',
+				key2: 'url2',
+				key3: 'url3'
 			};
 			var urls = imgdic.getURLArray();
 			expect(urls.join(',')).toEqual('url1,url2,url3');

@@ -22,20 +22,6 @@ enchant.m3.ImageDic = function() {
 };
 enchant.m3.ImageDic.prototype = {
 	/**
-	 * @deprecated use 'set' method TODO: delete this method
-	 * @return unique dictionary key
-	 */
-	getUniqueKey: function(key) {
-		var uniqKey;
-		var suffix = '';
-		while (this.urls[uniqKey = key + suffix] != undefined) {
-			(suffix.length == 0) ? suffix = 1 : suffix++;
-			if (suffix > 99) throw new Error("Can't get a unique key for '" + key + "'");
-		}
-		return uniqKey;
-	},
-
-	/**
 	 * Set image URL
 	 * @param key is name in scenario
 	 * @param url of image
@@ -367,6 +353,23 @@ enchant.m3.Scenario.prototype.__defineGetter__('sequence', function() {
 	return this._sequence;
 });
 
+/**
+ * [ キャラクター定義 ]
+ *  シナリオ中に登場するキャラクターはすべてこのクラスのオブジェクトと
+ *  なります。
+ *
+ * @param name
+ *  コンストラクタの第一引数は'キャラクター名'です。
+ *
+ * @param definition
+ *  第二引数に各定義を記述したオブジェクトを渡します。
+ *  表示に使う画像を 'ポーズ名' : '画像ファイルパス' の形式で記述します。
+ *  baseUrl + 上記パス で画像URLを指定します。
+ *  フルパスが記述されている時、baseUrlは無視されます。
+ *
+ *  Webサービス、M3Interface(@see http://m3itfc.appspot.com/)にて画像
+ *  ライブラリを提供する予定です。
+ */
 enchant.m3.Character = function(name, definition) {
 	this.id = name;
 	this.name = name;
