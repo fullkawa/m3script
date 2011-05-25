@@ -51,12 +51,44 @@ describe('M3Script', function() {
 			// TODO:
 		});
 
+		it ('has 999 sequences at most', function() {
+			expect(s.MAX_SEQUENCE_NO).toEqual(999);
+		});
+
+		it ('has four layers', function() {
+			expect(s.LAYERS.length).toEqual(4);
+		});
+
+		it ('has "bg" layer, it is for background', function() {
+			expect(s.LAYERS[0]).toEqual('bg');
+		});
+
+		it ('has "l1","l2","l3" layer, it is for character', function() {
+			expect(s.LAYERS[1]).toEqual('l1');
+			expect(s.LAYERS[2]).toEqual('l2');
+			expect(s.LAYERS[3]).toEqual('l3');
+		});
+
+		it ('shows character on waist shot by default', function() {
+			expect(s.defaultShotType).toEqual('WS');
+		});
+
 		it ('can play on new game.', function() {
 			expect(s.start).toBeDefined();
 		});
 
 		it ('can play on existing game.', function() {
 			expect(s.play).toBeDefined();
+		});
+
+		it ('can play step by step', function() {
+			var game = new Game();
+			s.sequence = {
+				1: {},
+				2: {}
+			};
+			s._game = s.initialize(game);
+			console.debug('seqNo='+s._game.seqNo);
 		});
 	});
 
@@ -88,44 +120,21 @@ describe('M3Script', function() {
 	});
 
 	describe('Message', function() {
-
-		window.onload = function() {
+		it ('Its default position and size -> x:5, y:5, width:300', function() {
 			var game = new Game();
-			game.onload = function() {
-				it ('could be a text only.', function() {
-					var text = 'hoge';
-					var msg = new Message(text);
-					expect(msg._msg).toEqual('hoge');
-				});
+			var default_msg = new Message();
+			expect(default_msg.x).toEqual(5);
+			expect(default_msg.y).toEqual(5);
+			expect(default_msg.width).toEqual(300);
+		});
 
-				it ('could be a name and text.', function() {
-					var name = 'miku';
-					var text = '"hoge"';
-					var msg = new Message(text, name);
-					expect(msg._msg).toEqual('<span class="m3_msg_name">miku</span><br/>"hoge"');
-				});
-			};
-		};
-	});
-
-	describe('Connector', function() {
-
-		// TODO:
-	});
-
-	describe('Close', function() {
-
-		// TODO:
-	});
-
-	describe('Jump', function() {
-
-		// TODO:
-	});
-
-	describe('Navigation', function() {
-
-		// TODO:
+		it ('Its standard(game window = 320 x 320) position and size -> x:6, y:240, width:308', function() {
+			var game = new Game();
+			var standard_msg = new Message(320, 320);
+			expect(standard_msg.x).toEqual(6);
+			expect(standard_msg.y).toEqual(240);
+			expect(standard_msg.width).toEqual(308);
+		});
 	});
 
 	describe('Utility Functions', function() {

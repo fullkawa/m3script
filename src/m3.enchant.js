@@ -86,49 +86,76 @@ enchant.m3.Scenario = function() {
 	/**
 	 * @type {String]
 	 *   URLの記述を短縮するために、共通部分を指定することが出来る。
-	 *   baseURLの値が
-	 *   is optional, it added before image url
 	 */
 	this.baseURL;
 
 	/**
-	 * @type {String} End Of Sentence
+	 * @type {String}
+	 *   すべての文末に付ける文字列。HTMLタグも使用可能。
+	 *   > End Of Sentence. HTML tags available.
 	 */
 	this.eos = '';
 };
 enchant.m3.Scenario.prototype = {
+	/**
+	 * シーケンス番号として使える最大値
+	 */
 	MAX_SEQUENCE_NO: 999,
 
+	/**
+	 * レイヤ名
+	 * 左から順に、上へ積まれていく
+	 */
 	LAYERS: ['bg', 'l1', 'l2', 'l3'],
+
 	MSG: 'msg',
 	SELECT: 'select',
 
 	/**
-	 * CU: Close Up
-	 * BS: Bust Shot
-	 * WS: Waist Shot
-	 * KS: Knee Shot
-	 * FS: Full Shot
+	 * キャラクターのショット(表示範囲)
+	 *
+	 * CU: Close Up 顔(クローズアップ)
+	 * BS: Bust Shot 胸から上
+	 * WS: Waist Shot 腰から上
+	 * KS: Knee Shot ひざから上
+	 * FS: Full Shot 全身
 	 */
 	SHOT_TYPES: ['CU', 'BS', 'WS', 'KS', 'FS'],
-	defaultShotType: 'WS',
 
 	/**
-	 * play on new game
+	 * 指定がないときのショット
+	 */
+	defaultShotType: 'WS',
+
+	initialize: function(game) {
+		game.seq = [];
+		game.seqNo = 0;
+
+		game.keybind(13, 'a'); // enter key
+		game.keybind(32, 'a'); // space key
+		game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
+		/* FIXME: not work
+		game.addEventListener('click', playNext);
+		*/
+		return game;
+	},
+
+	/**
+	 * 最初のシーケンスから再生する
+	 * > play on new game
 	 */
 	start: function() {
 		var s = this;
 		window.onload = function() {
 			s._game = new Game();
-			var game = s._game;
+			var game = initialize(s._game);
+			/*
 			game.seq = [];
 			game.seqNo = 0;
 
 			game.keybind(13, 'a'); // enter key
 			game.keybind(32, 'a'); // space key
 			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
-			/* FIXME: not work
-			game.addEventListener('click', playNext);
 			*/
 
 			var imgUrls = s.imgdic.getURLArray();
@@ -202,7 +229,8 @@ enchant.m3.Scenario.prototype = {
 		};
 	},
 	/**
-	 * play on existing game
+	 * シーケンスを再生する。ゲーム中でカットインとして使われる場合向け
+	 * > play on existing game
 	 * FIXME: Not test. enchant.js cannot load images on game.
 	 */
 	play: function(game) {
@@ -215,10 +243,6 @@ enchant.m3.Scenario.prototype = {
 		if (game.seq.length == 0) throw new Error('No sequence exists.');
 		game.pushScene(game.seq[0]);
 	},
-
-	/*
-	 * Scenario Specification
-	 */
 
 	doClear: function(d, sp) {
 		var value = d['clear'];
@@ -311,7 +335,11 @@ enchant.m3.Scenario.prototype = {
 		return lbl;
 	}
 };
-// TODO: もちっとスマートな形にはならないものか？
+/**
+ * 次のシーケンスへ進む
+ *
+ * TODO: もちっとスマートな形にはならないものか？
+ */
 var playNext = function(){
 	var game;
 	if (this instanceof Game) {
@@ -376,10 +404,10 @@ enchant.m3.Scenario.prototype.__defineGetter__('sequence', function() {
  *  シナリオ中に登場するキャラクターはすべてこのクラスのオブジェクトと
  *  なります。
  *
- * @param name
+ * @param {String} name
  *  コンストラクタの第一引数は'キャラクター名'です。
  *
- * @param definition
+ * @param {Object} definition
  *  第二引数に各定義を記述したオブジェクトを渡します。
  *  表示に使う画像を 'ポーズ名' : '画像ファイルパス' の形式で記述します。
  *  baseUrl + 上記パス で画像URLを指定します。
