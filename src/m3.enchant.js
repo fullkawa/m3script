@@ -15,17 +15,29 @@
 enchant.m3 = {};
 
 /**
- * Utility class to get image URL
+ * 使用画像のURLを管理するクラス
+ * > Utility class to get image URL
  */
 enchant.m3.ImageDic = function() {
 	this.urls = {};
 };
 enchant.m3.ImageDic.prototype = {
 	/**
-	 * Set image URL
-	 * @param key is name in scenario
-	 * @param url of image
-	 * @param baseUrl is optional, it added before url
+	 * 画像URLを登録する
+	 * > Set image URL
+	 *
+	 * @param {String} key
+	 *   シナリオ内で指定するときの名前
+	 *   > key is name in scenario.
+	 *
+	 * @param {String/Object} value
+	 *   {String}の場合、それは画像URLとみなす
+	 *   > If value is string, it is URL of image.
+	 *   {Object}の場合、そのimgプロパティを画像URLとみなす
+	 *   > If valule is object, its 'img' property is URL of image.
+	 *
+	 * @param {String} baseUrl (optional)
+	 *                  baseUrl is optional, it added before url
 	 */
 	set: function(key, value, baseUrl) {
 		var url;
@@ -49,7 +61,9 @@ enchant.m3.ImageDic.prototype = {
 	},
 
 	/**
-	 * @return Array of image URL
+	 * Game.preload の引数となる、画像URL配列を取得する
+	 *
+	 * @return {Array}
 	 */
 	getURLArray: function() {
 		var arr = [];
@@ -61,7 +75,8 @@ enchant.m3.ImageDic.prototype = {
 };
 
 /**
- * Scenario data
+ * シナリオデータ(画像、テキスト、効果など)のクラス
+ * > Scenario data
  */
 enchant.m3.Scenario = function() {
 	this._sequence;
@@ -69,7 +84,10 @@ enchant.m3.Scenario = function() {
 	this.imgdic = new ImageDic();
 
 	/**
-	 * @type {String] is optional, it added before image url
+	 * @type {String]
+	 *   URLの記述を短縮するために、共通部分を指定することが出来る。
+	 *   baseURLの値が
+	 *   is optional, it added before image url
 	 */
 	this.baseURL;
 
@@ -648,9 +666,18 @@ enchant.m3.Message = enchant.Class.create(enchant.Label, {
 
 
 /*
- * utility functions
+ * ユーティリティとして使われる関数
+ * > utility functions
  */
 
+/**
+ * 取得しうるもっとも長いURL(絶対URLとは限らない)を取得する
+ *
+ * @type {String} url
+ *
+ * @type {String} baseUrl
+ * URLに"http://"等が含まれないとき、baseURLがurlの前に追加される
+ */
 function getFullURL(url, baseUrl) {
 	var fullUrl = url;
 	if (url != undefined && typeof(url) == 'string' && url.length > 0) {
