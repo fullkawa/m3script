@@ -148,15 +148,11 @@ enchant.m3.Scenario.prototype = {
 		var s = this;
 		window.onload = function() {
 			s._game = new Game();
-			var game = initialize(s._game);
-			/*
-			game.seq = [];
-			game.seqNo = 0;
+			var game = s.initialize(s._game);
 
 			game.keybind(13, 'a'); // enter key
 			game.keybind(32, 'a'); // space key
 			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
-			*/
 
 			var imgUrls = s.imgdic.getURLArray();
 			game.preload(imgUrls);
@@ -666,6 +662,9 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 	}
 });
 
+/**
+ *
+ */
 enchant.m3.Message = enchant.Class.create(enchant.Label, {
 	/**
 	 * @param width {Number} of game screen

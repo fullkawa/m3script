@@ -82,13 +82,17 @@ describe('M3Script', function() {
 		});
 
 		it ('can play step by step', function() {
+			window.s = s;
 			var game = new Game();
-			s.sequence = {
+			window.s._game = window.s.initialize(game);
+			window.s.sequence = {
 				1: {},
 				2: {}
 			};
-			s._game = s.initialize(game);
-			console.debug('seqNo='+s._game.seqNo);
+			expect(window.s._game.seqNo).toEqual(0);
+
+			playNext();
+			expect(window.s._game.seqNo).toEqual(1);
 		});
 	});
 
