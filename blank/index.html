@@ -18,22 +18,12 @@
 		}
 
 		enchant('m3');
-
-		/*
-		 * キャラクター定義
-		 */
-		var chara1 = new Character('chara1', {
-			baseUrl: 'img/',
-			images: {
-				'(ポース名1)': '(ファイル名1)',
-				'(ポース名2)': '(ファイル名2)'
-			}
-		});
+		var s = new Scenario();
 
 		/*
 		 * 背景CG定義
 		 */
-		var s = new Scenario();
+		/* 背景CGを定義するときはこの行を削除してください
 		s = {
 			baseURL: 'img/',
 			images: {
@@ -41,6 +31,20 @@
 				'(画像名2)': '(ファイル名2)'
 			}
 		};
+		背景CGを定義するときはこの行を削除してください */
+
+		/*
+		 * キャラクター定義
+		 */
+		/* キャラクターを定義するときはこの行を削除してください
+		var chara1 = new Character('chara1', {
+			baseURL: 'img/',
+			images: {
+				'(ポース名1)': '(ファイル名1)',
+				'(ポース名2)': '(ファイル名2)'
+			}
+		});
+		キャラクターを定義するときはこの行を削除してください */
 
 		s.sequence = scene[scene_no];
 
