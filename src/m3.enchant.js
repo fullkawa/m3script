@@ -36,10 +36,10 @@ enchant.m3.ImageDic.prototype = {
 	 *   {Object}の場合、そのimgプロパティを画像URLとみなす
 	 *   > If valule is object, its 'img' property is URL of image.
 	 *
-	 * @param {String} baseUrl (optional)
-	 *                  baseUrl is optional, it added before url
+	 * @param {String} baseURL (optional)
+	 *                  baseURL is optional, it added before url
 	 */
-	set: function(key, value, baseUrl) {
+	set: function(key, value, baseURL) {
 		var url;
 		if (typeof(value) == 'string') {
 			url = value;
@@ -48,11 +48,11 @@ enchant.m3.ImageDic.prototype = {
 			url = value.img;
 		}
 		if (url != undefined) {
-			var fullUrl = getFullURL(url, baseUrl);
-			if (this.urls[key] != undefined && this.urls[key] != fullUrl) {
+			var fullURL = getFullURL(url, baseURL);
+			if (this.urls[key] != undefined && this.urls[key] != fullURL) {
 				console.warn('key:' + key + ' is already registed by other value.');
 			}
-			this.urls[key] = fullUrl;
+			this.urls[key] = fullURL;
 		}
 		else {
 			console.warn('Failed to get url. value is ...');
@@ -154,8 +154,8 @@ enchant.m3.Scenario.prototype = {
 			game.keybind(32, 'a'); // space key
 			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
 
-			var imgUrls = s.imgdic.getURLArray();
-			game.preload(imgUrls);
+			var imgURLs = s.imgdic.getURLArray();
+			game.preload(imgURLs);
 
 			game.onload = function() {
 				var sps = [];
@@ -254,19 +254,19 @@ enchant.m3.Scenario.prototype = {
 		if (layer == 'bg') {
 			var value = d[layer];
 			if (value != undefined) {
-				var imgUrl;
+				var imgURL;
 				if (typeof(value) == 'string') {
-					imgUrl = this.imgdic.urls[value];
+					imgURL = this.imgdic.urls[value];
 				}
 				else if (value.img != undefined && typeof(value.img) == 'string') {
-					imgUrl = this.imgdic.urls[value.img];
+					imgURL = this.imgdic.urls[value.img];
 				}
 				else {
 					console.warn('No image url.');
 				}
-				var img = this._game.assets[imgUrl];
+				var img = this._game.assets[imgURL];
 
-				sp = new Picture(this._game, img, { url: imgUrl });
+				sp = new Picture(this._game, img, { url: imgURL });
 			}
 		}
 		return sp;
@@ -405,9 +405,11 @@ enchant.m3.Scenario.prototype.__defineGetter__('sequence', function() {
  *
  * @param {Object} definition
  *  第二引数に各定義を記述したオブジェクトを渡します。
+ *
+ *  images :
  *  表示に使う画像を 'ポーズ名' : '画像ファイルパス' の形式で記述します。
- *  baseUrl + 上記パス で画像URLを指定します。
- *  フルパスが記述されている時、baseUrlは無視されます。
+ *  baseURL + 上記パス で画像URLを指定します。
+ *  フルパスが記述されている時、baseURLは無視されます。
  *
  *  Webサービス、M3Interface(@see http://m3itfc.appspot.com/)にて画像
  *  ライブラリを提供する予定です。
@@ -438,17 +440,19 @@ enchant.m3.Character.prototype = {
 		POSITION: ['LEFT_EDGE', 'LEFT', 'LEFT2', 'CENTER', 'RIGHT2', 'RIGHT', 'RIGHT_EDGE'],
 
 		addDefinition: function(definition) {
-			for (var key in definition) {
-				if (key == 'baseUrl') {
-					// Not image
-				}
-				else {
-					var urlKey = this.getURLKey(this.id, key);
-					this.imgdic.set(urlKey, definition[key], definition.baseUrl);
+			if (definition != undefined && definition.images != undefined) {
+				for (var key in definition.images) {
+					if (typeof(key) == 'string') {
+						var urlKey = this.getURLKey(this.id, key);
+						this.imgdic.set(urlKey, definition.images[key], definition.baseURL);
 
-					if (this.imgdic.urls[this.name] == undefined) {
-						this.imgdic.set(this.name, definition[key], definition.baseUrl);
-					};
+						if (this.imgdic.urls[this.name] == undefined) {
+							this.imgdic.set(this.name, definition.images[key], definition.baseURL);
+						};
+					}
+					else if (typeof(key) == 'object') {
+						// TODO:
+					}
 				}
 			}
 		},
@@ -702,27 +706,27 @@ enchant.m3.Message = enchant.Class.create(enchant.Label, {
  *
  * @type {String} url
  *
- * @type {String} baseUrl
+ * @type {String} baseURL
  * URLに"http://"等が含まれないとき、baseURLがurlの前に追加される
  */
-function getFullURL(url, baseUrl) {
-	var fullUrl = url;
+function getFullURL(url, baseURL) {
+	var fullURL = url;
 	if (url != undefined && typeof(url) == 'string' && url.length > 0) {
-		if (baseUrl != undefined && typeof(baseUrl) == 'string' && baseUrl.length > 0) {
+		if (baseURL != undefined && typeof(baseURL) == 'string' && baseURL.length > 0) {
 			if (url.charAt(0) == '/') {
-				fullUrl = url.substring(1, url.length);
+				fullURL = url.substring(1, url.length);
 			}
-			if (baseUrl.charAt(baseUrl.length-1) != '/') {
-				baseUrl = baseUrl + '/';
+			if (baseURL.charAt(baseURL.length-1) != '/') {
+				baseURL = baseURL + '/';
 			}
 
 			if (url.indexOf('://') > 0) {
 				// That url is 'full', so nothing to do.
 			}
 			else {
-				fullUrl = baseUrl + fullUrl;
+				fullURL = baseURL + fullURL;
 			}
 		}
 	}
-	return fullUrl;
+	return fullURL;
 }

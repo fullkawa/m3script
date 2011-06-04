@@ -11,19 +11,21 @@ catch(e) {
 }
 var s = new Scenario();
 var miku = new Character('miku', {
-	  baseUrl: 'http://m3itfc.appspot.com/figure/miku/',
-	  'default': {
-	    img: 'miku_00.png',
-	    fs: 400,
-	    ks: 306,
-	    ws: 180,
-	    bs: 125,
-	    cu: 100
-	  },
-	  'half_smile': 'miku_01.png',
-	  'smile': 'miku_02.png',
-	  'slight_bow': 'miku_03.png',
-	  'bow': 'miku_04.png'
+	baseURL: 'http://m3itfc.appspot.com/figure/miku/',
+	images: {
+		'default': {
+			img: 'miku_00.png',
+			fs: 400,
+			ks: 306,
+			ws: 180,
+			bs: 125,
+			cu: 100
+		},
+		'half_smile': 'miku_01.png',
+		'smile': 'miku_02.png',
+		'slight_bow': 'miku_03.png',
+		'bow': 'miku_04.png'
+	}
 });
 
 s.baseURL = 'http://m3itfc.appspot.com/';
