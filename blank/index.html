@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=SJIS">
+  <link rel="stylesheet" type="text/css" href="css/m3script.css" />
+  <script type="text/javascript" src="lib/enchant.min.js"></script>
+  <script type="text/javascript" src="lib/m3.enchant.js"></script>
+
+	<title>(ゲームタイトル)</title>
+  <script type="text/javascript" src="scenario.js"></script>
+
+  <script type="text/javascript">
+  	var scene_no;
+		if (location.search != undefined && location.search.length > 1) {
+			scene_no = location.search.substring(1);
+		} else {
+			scene_no = '1';
+		}
+
+		enchant('m3');
+
+		/*
+		 * キャラクター定義
+		 */
+		var chara1 = new Character('chara1', {
+			baseUrl: 'img/',
+			images: {
+				'(ポース名1)': '(ファイル名1)',
+				'(ポース名2)': '(ファイル名2)'
+			}
+		});
+
+		/*
+		 * 背景CG定義
+		 */
+		var s = new Scenario();
+		s = {
+			baseURL: 'img/',
+			images: {
+				'(画像名1)': '(ファイル名1)',
+				'(画像名2)': '(ファイル名2)'
+			}
+		};
+
+		s.sequence = scene[scene_no];
+
+		/*
+		 * 文末に表示する文字
+		 */
+		s.eos = '<span class="command" onclick="playNext();">&nbsp;&gt;&gt;&gt;&nbsp;次へ</span>';
+
+		s.start();
+  </script>
+</head>
+<body>
+
+<div id="enchant-stage"></div>
+
+</body>
+</html>
