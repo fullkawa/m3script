@@ -325,10 +325,12 @@ enchant.m3.Scenario.prototype = {
 		if (slct != undefined) {
 			var msg = slct['msg'];
 			var opts = slct['options'];
-			if (msg != undefined && opts != undefined) {
+			if (opts != undefined) {
 				lbl = new Message(Math.floor(this._game.width / 2), this._game.height, 0.4);
 				lbl.x = this._game.width / 4;
-				lbl.text = msg;
+				if (msg != undefined) {
+					lbl.text = msg;
+				}
 				for (var i = 1; i <= 9; i++) {
 					var opt = opts[i];
 					if (opt != undefined && opt['label'] != undefined && opt['linkTo'] != undefined) {
