@@ -155,6 +155,9 @@ enchant.m3.Scenario.prototype = {
 			game.keybind(32, 'a'); // space key
 			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
 
+			game.keybind(66, 'b'); // 'b' key
+			game.addEventListener(enchant.Event.B_BUTTON_DOWN, playBack);
+
 			s._seqcount = getLength(s.sequence);
 
 			var imgURLs = s.imgdic.getURLArray();
@@ -347,7 +350,7 @@ enchant.m3.Scenario.prototype = {
  *
  * TODO: もちっとスマートな形にはならないものか？
  */
-var playNext = function(){
+var playNext = function() {
 	var game;
 	if (this instanceof Game) {
 		game = this;
@@ -366,6 +369,28 @@ var playNext = function(){
 			game.popScene();
 			game.stop();
 			console.info('Game stoped.');
+		}
+	}
+	else {
+		console.warn('Cannot get a game object. "this" is ...');
+		console.debug(this);
+	}
+};
+var playBack = function() {
+	var game;
+	if (this instanceof Game) {
+		game = this;
+	}
+	else if (this.s != undefined) {
+		// 'this' is instance of Window / DOMWindow
+		game = this.s._game;
+	}
+
+	if (game != undefined) {
+		if (game.seqNo > 0) {
+			game.seqNo--;
+			game.replaceScene(game.seq[game.seqNo]);
+			console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
 		}
 	}
 	else {
