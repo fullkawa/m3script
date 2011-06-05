@@ -15,12 +15,12 @@ describe('M3Script', function() {
 			imgdic.set('key1', 'img1.png');
 
 			// Normal
-			var baseUrl = 'http://www.sample.com/img/';
-			imgdic.set('key2', 'img2.png', baseUrl);
+			var baseURL = 'http://www.sample.com/img/';
+			imgdic.set('key2', 'img2.png', baseURL);
 
 			// No slash at last
-			var baseUrl_noSlash = 'http://www.sample.com/img';
-			imgdic.set('key3', 'img3.png', baseUrl_noSlash);
+			var baseURL_noSlash = 'http://www.sample.com/img';
+			imgdic.set('key3', 'img3.png', baseURL_noSlash);
 
 			expect(imgdic.urls['key1']).toEqual('img1.png');
 			expect(imgdic.urls['key2']).toEqual('http://www.sample.com/img/img2.png');
@@ -99,7 +99,7 @@ describe('M3Script', function() {
 	describe('Character', function() {
 
 		var c = new Character('piyo', {
-			baseUrl: 'http://www.hoge.com/',
+			baseURL: 'http://www.hoge.com/',
 			'smile': 'smile.png'
 		});
 
@@ -144,21 +144,21 @@ describe('M3Script', function() {
 	describe('Utility Functions', function() {
 
 		it ('can getFullURL', function() {
-			var baseUrl1 = 'http://www.hoge.com/';
-			var baseUrl2 = 'http://www.hoge.com';
+			var baseURL1 = 'http://www.hoge.com/';
+			var baseURL2 = 'http://www.hoge.com';
 
 			var url1 = 'pic.png';
 			expect(getFullURL(url1)).toEqual('pic.png');
 
-			expect(getFullURL(url1, baseUrl1)).toEqual('http://www.hoge.com/pic.png');
+			expect(getFullURL(url1, baseURL1)).toEqual('http://www.hoge.com/pic.png');
 
-			expect(getFullURL(url1, baseUrl2)).toEqual('http://www.hoge.com/pic.png');
+			expect(getFullURL(url1, baseURL2)).toEqual('http://www.hoge.com/pic.png');
 
 			var url2 = '/pic.png';
-			expect(getFullURL(url2, baseUrl1)).toEqual('http://www.hoge.com/pic.png');
+			expect(getFullURL(url2, baseURL1)).toEqual('http://www.hoge.com/pic.png');
 
 			var url3 = 'http://www.piyo.com/pic.png';
-			expect(getFullURL(url3, baseUrl1)).toEqual('http://www.piyo.com/pic.png');
+			expect(getFullURL(url3, baseURL1)).toEqual('http://www.piyo.com/pic.png');
 		});
 	});
 });

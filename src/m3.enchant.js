@@ -80,6 +80,7 @@ enchant.m3.ImageDic.prototype = {
  */
 enchant.m3.Scenario = function() {
 	this._sequence;
+	this._seqcount;
 	this._game;
 	this.imgdic = new ImageDic();
 
@@ -154,6 +155,8 @@ enchant.m3.Scenario.prototype = {
 			game.keybind(32, 'a'); // space key
 			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
 
+			s._seqcount = getLength(s.sequence);
+
 			var imgURLs = s.imgdic.getURLArray();
 			game.preload(imgURLs);
 
@@ -194,7 +197,9 @@ enchant.m3.Scenario.prototype = {
 							if (cld != undefined) {
 								if (layer == s.MSG) {
 									if (cld.text.length > 0) {
-										s.addMessage(cld, s.eos);
+										if (game.seq.length < s._seqcount) {
+											s.addMessage(cld, s.eos);
+										}
 										sn.addChild(cld);
 									}
 								}
@@ -204,6 +209,10 @@ enchant.m3.Scenario.prototype = {
 
 								if (cld instanceof Figure) {
 									s.addMessage(sp[s.MSG], cld[s.MSG], cld['name']);
+								}
+
+								if (game.seq.length == s._seqcount && s.eog != undefined) {
+									s.addMessage(cld, s.eog);
 								}
 							}
 						}
@@ -729,4 +738,12 @@ function getFullURL(url, baseURL) {
 		}
 	}
 	return fullURL;
+}
+
+function getLength(obj) {
+	var len = 0;
+	for (key in obj) {
+		len++;
+	}
+	return len;
 }
