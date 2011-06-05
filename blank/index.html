@@ -10,14 +10,6 @@
 	<script type="text/javascript" src="scenario.js"></script>
 
 	<script type="text/javascript">
-		var scenario_name;
-		if (location.search != undefined && location.search.length > 1) {
-			scenario_name = decodeURI(location.search.substring(1));
-		} else {
-			scenario_name = '1';
-		}
-		console.debug('scenario: '+scenario_name);
-
 		enchant('m3');
 		var s = new Scenario();
 
@@ -31,13 +23,11 @@
 		 */
 
 		/* 背景画像を定義するときはこの行を削除してください(1)
-		s = {
-			baseURL: 'img/',
-			images: {
-				// 記述例　* 定義する際には消してください
-				'教室': 'bg001.png',
-				'自分の部屋': 'bg002.png'
-			}
+		s.baseURL = 'img/';
+		s.images = {
+			// 記述例　* 定義する際には消してください
+			'教室': 'bg001.png',
+			'自分の部屋': 'bg002.png'
 		};
 		背景CGを定義するときはこの行を削除してください(2) */
 
@@ -61,6 +51,12 @@
 		});
 		キャラクターを定義するときはこの行を削除してください(2) */
 
+		var scenario_name;
+		if (location.search != undefined && location.search.length > 1) {
+			scenario_name = decodeURI(location.search.substring(1));
+		} else {
+			scenario_name = '1';
+		}
 		s.sequence = scenario[scenario_name];
 
 		/*
