@@ -1,60 +1,82 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=SJIS">
-  <link rel="stylesheet" type="text/css" href="css/m3script.css" />
-  <script type="text/javascript" src="lib/enchant.min.js"></script>
-  <script type="text/javascript" src="lib/m3.enchant.js"></script>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<link rel="stylesheet" type="text/css" href="css/m3script.css" />
+	<script type="text/javascript" src="lib/enchant.min.js"></script>
+	<script type="text/javascript" src="lib/m3.enchant.js"></script>
 
 	<title>(ゲームタイトル)</title>
-  <script type="text/javascript" src="scenario.js"></script>
+	<script type="text/javascript" src="scenario.js"></script>
 
-  <script type="text/javascript">
-  	var scene_no;
+	<script type="text/javascript">
+		var scenario_name;
 		if (location.search != undefined && location.search.length > 1) {
-			scene_no = location.search.substring(1);
+			scenario_name = decodeURI(location.search.substring(1));
 		} else {
-			scene_no = '1';
+			scenario_name = '1';
 		}
+		console.debug('scenario: '+scenario_name);
 
 		enchant('m3');
 		var s = new Scenario();
 
 		/*
-		 * 背景CG定義
+		 * [ 背景画像/一枚絵 定義 ]
+		 *
+		 *  シナリオ中で使用する画像はすべてここで定義する必要があります。
+		 *  使う画像を '画像名' : '画像ファイルパス' の形式で記述します。
+		 *  baseURL + 上記パス で画像ファイルパスを指定します。
+		 *  絶対URL(http://～)で記述されている時、baseURLは無視されます。
 		 */
-		/* 背景CGを定義するときはこの行を削除してください
+
+		/* 背景画像を定義するときはこの行を削除してください(1)
 		s = {
 			baseURL: 'img/',
 			images: {
-				'(画像名1)': '(ファイル名1)',
-				'(画像名2)': '(ファイル名2)'
+				// 記述例　* 定義する際には消してください
+				'教室': 'bg001.png',
+				'自分の部屋': 'bg002.png'
 			}
 		};
-		背景CGを定義するときはこの行を削除してください */
+		背景CGを定義するときはこの行を削除してください(2) */
 
 		/*
-		 * キャラクター定義
+		 * [ キャラクター 定義 ]
+		 *
+		 *  表示に使う立ち絵画像を 'ポーズ名' : '画像ファイルパス' の形式で記述します。
+		 *  baseURLの扱いについては背景画像と同様です。
+		 *
+		 *  最初に指定した画像が「デフォルト」として、ポーズ名の指定がないときに使われます。
 		 */
-		/* キャラクターを定義するときはこの行を削除してください
+
+		/* キャラクターを定義するときはこの行を削除してください(1)
 		var chara1 = new Character('chara1', {
 			baseURL: 'img/',
 			images: {
-				'(ポース名1)': '(ファイル名1)',
-				'(ポース名2)': '(ファイル名2)'
+				// 記述例　* 定義する際には消してください
+				'笑顔': 'chara1_00.png',
+				'大笑い': 'chara1_01.png'
 			}
 		});
-		キャラクターを定義するときはこの行を削除してください */
+		キャラクターを定義するときはこの行を削除してください(2) */
 
-		s.sequence = scene[scene_no];
+		s.sequence = scenario[scenario_name];
 
 		/*
-		 * 文末に表示する文字
+		 * １メッセージごとに文末に追加される文字列
+		 * 単に、'<br/>'だけでもOK
+		 * Enterキー/スペースキーでもテキスト送りを行えます。
 		 */
 		s.eos = '<span class="command" onclick="playNext();">&nbsp;&gt;&gt;&gt;&nbsp;次へ</span>';
 
+		/*
+		 * ゲーム終了時に表示される文字列
+		 */
+		s.eog = 'ゲーム終了&nbsp;<a href="index.html">&lt;最初へ戻る&gt;</a>';
+
 		s.start();
-  </script>
+	</script>
 </head>
 <body>
 
