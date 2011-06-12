@@ -123,6 +123,13 @@ describe('M3Script', function() {
 		// TODO:
 	});
 
+	describe('RoundLabel', function() {
+		it ('is subclass of Label', function() {
+			var rlbl = new RoundLabel('hoge');
+			expect(rlbl instanceof Label).toBeTruthy();
+		});
+	});
+
 	describe('Message', function() {
 		it ('Its default position and size -> x:4, y:0, width:276', function() {
 			var game = new Game();

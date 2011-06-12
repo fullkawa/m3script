@@ -83,373 +83,6 @@ enchant.m3.ImageDic.prototype = {
 };
 
 /**
- * シナリオデータ(画像、テキスト、効果など)のクラス
- * > Scenario data
- */
-enchant.m3.Scenario = function() {
-	this._sequence;
-	this._seqcount;
-	this._game;
-	this.imgdic = new ImageDic();
-
-	/**
-	 * @type {String]
-	 *   URLの記述を短縮するために、共通部分を指定することが出来る。
-	 */
-	this.baseURL;
-
-	/**
-	 * @type {String}
-	 *   すべての文末に付ける文字列。HTMLタグも使用可能。
-	 *   > End Of Sentence. HTML tags available.
-	 */
-	this.eos = '';
-};
-enchant.m3.Scenario.prototype = {
-	/**
-	 * シーケンス番号として使える最大値
-	 */
-	MAX_SEQUENCE_NO: 999,
-
-	/**
-	 * レイヤ名
-	 * 左から順に、上へ積まれていく
-	 */
-	LAYERS: ['bg', 'l1', 'l2', 'l3'],
-
-	MSG: 'msg',
-	SELECT: 'select',
-
-	/**
-	 * キャラクターのショット(表示範囲)
-	 *
-	 * CU: Close Up 顔(クローズアップ)
-	 * BS: Bust Shot 胸から上
-	 * WS: Waist Shot 腰から上
-	 * KS: Knee Shot ひざから上
-	 * FS: Full Shot 全身
-	 */
-	SHOT_TYPES: ['CU', 'BS', 'WS', 'KS', 'FS'],
-
-	/**
-	 * 指定がないときのショット
-	 */
-	defaultShotType: 'WS',
-
-	initialize: function(game) {
-		game.seq = [];
-		game.seqNo = 0;
-
-		game.keybind(13, 'a'); // enter key
-		game.keybind(32, 'a'); // space key
-		game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
-		/* FIXME: not work
-		game.addEventListener('click', playNext);
-		*/
-		return game;
-	},
-
-	/**
-	 * 最初のシーケンスから再生する
-	 * > play on new game
-	 */
-	start: function() {
-		var s = this;
-		window.onload = function() {
-			s._game = new Game();
-			var game = s.initialize(s._game);
-
-			game.keybind(13, 'a'); // enter key
-			game.keybind(32, 'a'); // space key
-			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
-
-			game.keybind(66, 'b'); // 'b' key
-			game.addEventListener(enchant.Event.B_BUTTON_DOWN, playBack);
-
-			s._seqcount = getLength(s.sequence);
-
-			var imgURLs = s.imgdic.getURLArray();
-			game.preload(imgURLs);
-
-			game.onload = function() {
-				var sps = [];
-				for (var i = 1; i <= s.MAX_SEQUENCE_NO; i++) {
-					var d = s.sequence[i];
-					if (d != undefined) {
-						// console.debug('--- ' + i);
-						sps.push(new Object());
-						var sp = sps[sps.length - 1];
-						var sp_prev = undefined;
-						if (sps.length > 1) {
-							sp_prev = sps[sps.length - 2];
-						}
-						game.seq.push(new Scene());
-						var sn = game.seq[game.seq.length - 1];
-
-						s.LAYERS.forEach(function(layer) {
-							// console.debug(i+': '+layer);
-							sp[layer] = s.getPicture(d, layer);
-							if (sp[layer] == undefined) {
-								sp[layer] = s.getFigure(d, layer);
-							}
-							if (sp[layer] == undefined && sp_prev != undefined && sp_prev[layer] != undefined) {
-								sp[layer] = sp_prev[layer].clone();
-							}
-						});
-
-						sp[s.MSG] = new Message('', { y: game.height * 0.75 });
-						sp[s.MSG] = s.getMessage(d, sp[s.MSG]);
-
-						s.doClear(d, sp);
-
-						for (var layer in sp) {
-							var cld = sp[layer];
-
-							if (cld != undefined) {
-								if (layer == s.MSG) {
-									if (cld.text.length > 0) {
-										if (game.seq.length < s._seqcount) {
-											cld.addMessage(s.eos);
-										}
-										sn.addChild(cld);
-									}
-								}
-								else {
-									sn.addChild(cld);
-								}
-
-								if (cld instanceof Figure) {
-									sp[s.MSG].addMessage(cld[s.MSG], cld['name']);
-								}
-
-								if (game.seq.length == s._seqcount && s.eog != undefined) {
-									sp[s.MSG].addMessage(s.eog);
-								}
-							}
-						}
-
-						sp[s.SELECT] = s.getSelection(d);
-						if (sp[s.SELECT] != undefined) {
-							sn.addChild(sp[s.SELECT]);
-						}
-					}
-				}
-				if (game.seq.length == 0) {
-					console.warn('No sequence.');
-				}
-				else {
-					game.pushScene(game.seq[0]);
-				}
-			};
-			game.start();
-		};
-	},
-	/**
-	 * シーケンスを再生する。ゲーム中でカットインとして使われる場合向け
-	 * > play on existing game
-	 * FIXME: Not test. enchant.js cannot load images on game.
-	 */
-	play: function(game) {
-		if (game == undefined || !(game instanceof Game)) {
-			throw new Error('Argument is not a game instance.');
-		}
-		this._game = game;
-		game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
-
-		if (game.seq.length == 0) throw new Error('No sequence exists.');
-		game.pushScene(game.seq[0]);
-	},
-
-	doClear: function(d, sp) {
-		var value = d['clear'];
-		for (var layer in sp) {
-			if ((layer != this.MSG) && (value == 'all' || value == layer)) {
-				sp[layer] = undefined;
-			}
-		}
-	},
-
-	getPicture: function(d, layer) {
-		var sp;
-		if (layer == 'bg') {
-			var value = d[layer];
-			if (value != undefined) {
-				var imgURL;
-				if (typeof(value) == 'string') {
-					imgURL = this.imgdic.urls[value];
-				}
-				else if (value.img != undefined && typeof(value.img) == 'string') {
-					imgURL = this.imgdic.urls[value.img];
-				}
-				else {
-					console.warn('No image url.');
-				}
-				var img = this._game.assets[imgURL];
-
-				sp = new Picture(this._game, img, { url: imgURL });
-			}
-		}
-		return sp;
-	},
-
-	getFigure: function(d, layer) {
-		var sp;
-		if (this.LAYERS.indexOf(layer) > 0) {
-			var value = d[layer];
-			if ((value != undefined) && (value instanceof Character == true)) {
-				var props = value.getProps();
-				if (props != undefined && props.url != undefined) {
-					var img = this._game.assets[props.url];
-					props.x = Math.floor(this._game.width / 6) * props.xpos - Math.floor(img.width / 2);
-					sp = new Figure(img, props);
-				}
-			}
-		}
-		return sp;
-	},
-
-	/**
-	 * @deprecated
-	 *
-	 * @param msg {Message}
-	 * @param text {String}	i.e. message
-	 * @param name {String}	name in message dialog
-	 */
-	addMessage: function(msg, text, name) {
-		if (name != undefined) {
-			msg.text += '<span class="m3_msg_name">' + (new String(name)) + '</span><br/>';
-		}
-		if (text != undefined) {
-			msg.text += new String(text) + '<br/>';
-		}
-	},
-
-	getMessage: function(d, msg) {
-		var text = d[this.MSG];
-		if (text != undefined && text.length > 0) {
-			msg.addMessage(text);
-		}
-		return msg;
-	},
-
-	getSelection: function(d) {
-		var grp = new Group();
-		var slct = d['select'];
-		if (slct != undefined) {
-			var msg = slct['msg'];
-			if (slct['options'] != undefined) {
-				/*
-				lbl = new Message(Math.floor(this._game.width / 2), this._game.height, 0.4);
-				lbl.x = this._game.width / 4;
-				*/
-				if (msg != undefined) {
-					//lbl.text = msg;
-					var sel = new Selection(msg);
-					sel._y = 60;
-					grp.addChild(sel);
-				}
-				var opts = [];
-				for (var i = 1; i <= 5; i++) {
-					var opt = slct['options'][i];
-					if (opt != undefined && opt['label'] != undefined && opt['linkTo'] != undefined) {
-						//lbl.text += '<div class="m3_command"><a href="' + opt['linkTo'] + '">' + opt['label'] + '</a></div>';
-						opts[i-1] = new SelOption(opt['label'], opt['linkTo']);
-						opts[i-1]._y = sel._y + 14 + i * 38;
-						grp.addChild(opts[i-1]);
-					}
-				}
-			}
-		}
-		return grp;
-	}
-};
-/**
- * 次のシーケンスへ進む
- *
- * TODO: もちっとスマートな形にはならないものか？
- */
-var playNext = function() {
-	var game;
-	if (this instanceof Game) {
-		game = this;
-	}
-	else if (this.s != undefined) {
-		// 'this' is instance of Window / DOMWindow
-		game = this.s._game;
-	}
-
-	if (game != undefined) {
-		game.seqNo++;
-		if (game.seq.length > game.seqNo) {
-			game.replaceScene(game.seq[game.seqNo]);
-			console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
-		} else {
-			game.popScene();
-			game.stop();
-			console.info('Game stoped.');
-		}
-	}
-	else {
-		console.warn('Cannot get a game object. "this" is ...');
-		console.debug(this);
-	}
-};
-var playBack = function() {
-	var game;
-	if (this instanceof Game) {
-		game = this;
-	}
-	else if (this.s != undefined) {
-		// 'this' is instance of Window / DOMWindow
-		game = this.s._game;
-	}
-
-	if (game != undefined) {
-		if (game.seqNo > 0) {
-			game.seqNo--;
-			game.replaceScene(game.seq[game.seqNo]);
-			console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
-		}
-	}
-	else {
-		console.warn('Cannot get a game object. "this" is ...');
-		console.debug(this);
-	}
-};
-enchant.m3.Scenario.prototype.__defineSetter__('images', function(images) {
-	// Get all image URL
-	for (var key in images) {
-		this.imgdic.set(key, images[key], this.baseURL);
-	}
-});
-enchant.m3.Scenario.prototype.__defineSetter__('sequence', function(sequence) {
-	// Get all image URL
-	for (var key in sequence) {
-		var value = sequence[key];
-		var imgdic = this.imgdic;
-		this.LAYERS.forEach(function(layer) {
-			if (value[layer] != undefined) {
-				if (typeof(value[layer]) == 'string') {
-					// Got already, but...
-					if (imgdic.urls[value[layer]] == undefined) {
-						console.warn('Not regist image URL in s.images; sequence: '
-							+ key + ' > ' + layer + ', name: ' + value[layer]);
-					}
-				}
-				else if (value[layer].getProps != undefined) {
-					var props = value[layer].getProps();
-					imgdic.set(props.key, props.url);
-				}
-			}
-		});
-	}
-	this._sequence = sequence;
-});
-enchant.m3.Scenario.prototype.__defineGetter__('sequence', function() {
-	return this._sequence;
-});
-
-/**
  * [ キャラクター定義 ]
  *  シナリオ中に登場するキャラクターはすべてこのクラスのオブジェクトと
  *  なります。
@@ -636,6 +269,376 @@ enchant.m3.Character.prototype = {
 };
 
 /**
+ * シナリオデータ(画像、テキスト、効果など)のクラス
+ * > Scenario data
+ */
+enchant.m3.Scenario = function() {
+	this._sequence;
+	this._seqcount;
+	this._game;
+	this.imgdic = new ImageDic();
+
+	/**
+	 * @type {String]
+	 *   URLの記述を短縮するために、共通部分を指定することが出来る。
+	 */
+	this.baseURL;
+
+	/**
+	 * @type {String}
+	 *   すべての文末に付ける文字列。HTMLタグも使用可能。
+	 *   > End Of Sentence. HTML tags available.
+	 */
+	this.eos = '';
+};
+enchant.m3.Scenario.prototype = {
+	/**
+	 * シーケンス番号として使える最大値
+	 */
+	MAX_SEQUENCE_NO: 999,
+
+	/**
+	 * レイヤ名
+	 * 左から順に、上へ積まれていく
+	 */
+	LAYERS: ['bg', 'l1', 'l2', 'l3'],
+
+	MSG: 'msg',
+	SELECT: 'select',
+
+	/**
+	 * キャラクターのショット(表示範囲)
+	 *
+	 * CU: Close Up 顔(クローズアップ)
+	 * BS: Bust Shot 胸から上
+	 * WS: Waist Shot 腰から上
+	 * KS: Knee Shot ひざから上
+	 * FS: Full Shot 全身
+	 */
+	SHOT_TYPES: ['CU', 'BS', 'WS', 'KS', 'FS'],
+
+	/**
+	 * 指定がないときのショット
+	 */
+	defaultShotType: 'WS',
+
+	initialize: function(game) {
+		game.seq = [];
+		game.seqNo = 0;
+
+		game.keybind(13, 'a'); // enter key
+		game.keybind(32, 'a'); // space key
+		game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
+		return game;
+	},
+
+	/**
+	 * 最初のシーケンスから再生する
+	 * > play on new game
+	 */
+	start: function() {
+		var s = this;
+		window.onload = function() {
+			s._game = new Game();
+			var game = s.initialize(s._game);
+
+			game.keybind(13, 'a'); // enter key
+			game.keybind(32, 'a'); // space key
+			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
+
+			game.keybind(66, 'b'); // 'b' key
+			game.addEventListener(enchant.Event.B_BUTTON_DOWN, playBack);
+
+			s._seqcount = getLength(s.sequence);
+
+			var imgURLs = s.imgdic.getURLArray();
+			game.preload(imgURLs);
+
+			game.onload = function() {
+				var sps = [];
+				for (var i = 1; i <= s.MAX_SEQUENCE_NO; i++) {
+					var d = s.sequence[i];
+					if (d != undefined) {
+						// console.debug('--- ' + i);
+						sps.push(new Object());
+						var sp = sps[sps.length - 1];
+						var sp_prev = undefined;
+						if (sps.length > 1) {
+							sp_prev = sps[sps.length - 2];
+						}
+						game.seq.push(new Scene());
+						var sn = game.seq[game.seq.length - 1];
+
+						s.LAYERS.forEach(function(layer) {
+							// console.debug(i+': '+layer);
+							sp[layer] = s.getPicture(d, layer);
+							if (sp[layer] == undefined) {
+								sp[layer] = s.getFigure(d, layer);
+							}
+							if (sp[layer] == undefined && sp_prev != undefined && sp_prev[layer] != undefined) {
+								sp[layer] = sp_prev[layer].clone();
+							}
+						});
+
+						sp[s.MSG] = new Message('', { y: game.height * 0.75 });
+						sp[s.MSG] = s.getMessage(d, sp[s.MSG]);
+
+						s.doClear(d, sp);
+
+						for (var layer in sp) {
+							var cld = sp[layer];
+
+							if (cld != undefined) {
+								if (layer == s.MSG) {
+									if (cld.text.length > 0) {
+										if (game.seq.length < s._seqcount) {
+											//cld.addMessage(s.eos);
+											sn.addChild(new NextButton(s.eos));
+										}
+										sn.addChild(cld);
+									}
+								}
+								else {
+									sn.addChild(cld);
+								}
+
+								if (cld instanceof Figure) {
+									sp[s.MSG].addMessage(cld[s.MSG], cld['name']);
+								}
+
+								if (game.seq.length == s._seqcount && s.eog != undefined) {
+									sp[s.MSG].addMessage(s.eog);
+								}
+							}
+						}
+
+						sp[s.SELECT] = s.getSelection(d);
+						if (sp[s.SELECT] != undefined) {
+							sn.addChild(sp[s.SELECT]);
+						}
+					}
+				}
+				if (game.seq.length == 0) {
+					console.warn('No sequence.');
+				}
+				else {
+					game.pushScene(game.seq[0]);
+				}
+			};
+			game.start();
+		};
+	},
+	/**
+	 * シーケンスを再生する。ゲーム中でカットインとして使われる場合向け
+	 * > play on existing game
+	 * FIXME: Not test. enchant.js cannot load images on game.
+	 */
+	play: function(game) {
+		if (game == undefined || !(game instanceof Game)) {
+			throw new Error('Argument is not a game instance.');
+		}
+		this._game = game;
+		game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
+
+		if (game.seq.length == 0) throw new Error('No sequence exists.');
+		game.pushScene(game.seq[0]);
+	},
+
+	doClear: function(d, sp) {
+		var value = d['clear'];
+		for (var layer in sp) {
+			if ((layer != this.MSG) && (value == 'all' || value == layer)) {
+				sp[layer] = undefined;
+			}
+		}
+	},
+
+	getPicture: function(d, layer) {
+		var sp;
+		if (layer == 'bg') {
+			var value = d[layer];
+			if (value != undefined) {
+				var imgURL;
+				if (typeof(value) == 'string') {
+					imgURL = this.imgdic.urls[value];
+				}
+				else if (value.img != undefined && typeof(value.img) == 'string') {
+					imgURL = this.imgdic.urls[value.img];
+				}
+				else {
+					console.warn('No image url.');
+				}
+				var img = this._game.assets[imgURL];
+
+				sp = new Picture(this._game, img, { url: imgURL });
+			}
+		}
+		return sp;
+	},
+
+	getFigure: function(d, layer) {
+		var sp;
+		if (this.LAYERS.indexOf(layer) > 0) {
+			var value = d[layer];
+			if ((value != undefined) && (value instanceof Character == true)) {
+				var props = value.getProps();
+				if (props != undefined && props.url != undefined) {
+					var img = this._game.assets[props.url];
+					props.x = Math.floor(this._game.width / 6) * props.xpos - Math.floor(img.width / 2);
+					sp = new Figure(img, props);
+				}
+			}
+		}
+		return sp;
+	},
+
+	/**
+	 * @deprecated
+	 *
+	 * @param msg {Message}
+	 * @param text {String}	i.e. message
+	 * @param name {String}	name in message dialog
+	 */
+	addMessage: function(msg, text, name) {
+		if (name != undefined) {
+			msg.text += '<span class="m3_msg_name">' + (new String(name)) + '</span><br/>';
+		}
+		if (text != undefined) {
+			msg.text += new String(text) + '<br/>';
+		}
+	},
+
+	getMessage: function(d, msg) {
+		var text = d[this.MSG];
+		if (text != undefined && text.length > 0) {
+			msg.addMessage(text);
+		}
+		return msg;
+	},
+
+	getSelection: function(d) {
+		var grp = new Group();
+		var slct = d['select'];
+		if (slct != undefined) {
+			var msg = slct['msg'];
+			if (slct['options'] != undefined) {
+				/*
+				lbl = new Message(Math.floor(this._game.width / 2), this._game.height, 0.4);
+				lbl.x = this._game.width / 4;
+				*/
+				if (msg != undefined) {
+					//lbl.text = msg;
+					var sel = new Selection(msg);
+					sel._y = 60;
+					grp.addChild(sel);
+				}
+				var opts = [];
+				for (var i = 1; i <= 5; i++) {
+					var opt = slct['options'][i];
+					if (opt != undefined && opt['label'] != undefined && opt['linkTo'] != undefined) {
+						//lbl.text += '<div class="m3_command"><a href="' + opt['linkTo'] + '">' + opt['label'] + '</a></div>';
+						opts[i-1] = new SelOption(opt['label'], opt['linkTo']);
+						opts[i-1]._y = sel._y + 14 + i * 38;
+						grp.addChild(opts[i-1]);
+					}
+				}
+			}
+		}
+		return grp;
+	}
+};
+enchant.m3.Scenario.prototype.__defineSetter__('images', function(images) {
+	// Get all image URL
+	for (var key in images) {
+		this.imgdic.set(key, images[key], this.baseURL);
+	}
+});
+enchant.m3.Scenario.prototype.__defineSetter__('sequence', function(sequence) {
+	// Get all image URL
+	for (var key in sequence) {
+		var value = sequence[key];
+		var imgdic = this.imgdic;
+		this.LAYERS.forEach(function(layer) {
+			if (value[layer] != undefined) {
+				if (typeof(value[layer]) == 'string') {
+					// Got already, but...
+					if (imgdic.urls[value[layer]] == undefined) {
+						console.warn('Not regist image URL in s.images; sequence: '
+							+ key + ' > ' + layer + ', name: ' + value[layer]);
+					}
+				}
+				else if (value[layer].getProps != undefined) {
+					var props = value[layer].getProps();
+					imgdic.set(props.key, props.url);
+				}
+			}
+		});
+	}
+	this._sequence = sequence;
+});
+enchant.m3.Scenario.prototype.__defineGetter__('sequence', function() {
+	return this._sequence;
+});
+
+enchant.m3.NextButton = enchant.Class.create(enchant.Label, {
+	initialize: function(text) {
+		Label.call(this, text);
+		this._element.className = 'm3_command';
+
+		console.debug(this);
+		this.addEventListener(enchant.Event.TOUCH_END, playNext);
+	}
+});
+enchant.m3.NextButton.prototype.NO_FUNCTIONS = function() {
+	// TODO:
+};
+
+/**
+ * 次のシーケンスへ進む
+ */
+var playNext = function() {
+	var game = s._game;
+
+	if (game != undefined) {
+		game.seqNo++;
+		if (game.seq.length > game.seqNo) {
+			game.replaceScene(game.seq[game.seqNo]);
+			console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
+		} else {
+			game.popScene();
+			game.stop();
+			console.info('Game stoped.');
+		}
+	}
+	else {
+		console.warn('Cannot get a game object. "this" is ...');
+		console.debug(this);
+	}
+};
+var playBack = function() {
+	var game;
+	if (this instanceof Game) {
+		game = this;
+	}
+	else if (this.s != undefined) {
+		// 'this' is instance of Window / DOMWindow
+		game = this.s._game;
+	}
+
+	if (game != undefined) {
+		if (game.seqNo > 0) {
+			game.seqNo--;
+			game.replaceScene(game.seq[game.seqNo]);
+			console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
+		}
+	}
+	else {
+		console.warn('Cannot get a game object. "this" is ...');
+		console.debug(this);
+	}
+};
+
+/**
  * Background image, Event CG and so on...
  */
 enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
@@ -687,6 +690,10 @@ enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
 	}
 });
 
+enchant.m3.Picture.prototype.NO_FUNCTIONS = function() {
+	// TODO:
+};
+
 /**
  * Character image
  */
@@ -720,22 +727,20 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 	}
 });
 
+enchant.m3.Figure.prototype.NO_FUNCTIONS = function() {
+	// TODO:
+};
+
 /**
- * メッセージウィンドウ
+ * 角丸めされたLabel
  */
-enchant.m3.Message =  enchant.Class.create(enchant.Label, {
+enchant.m3.RoundLabel =  enchant.Class.create(enchant.Label, {
 	/**
 	 * @param text {String}
 	 * @param options {Object}
-	 * @param width {Number} of game screen
-	 * @param height {Number} of game screen
-	 * @param y_ratio {Number}	y = height * y_ratio
 	 */
 	initialize: function(text, options) {
 		Label.call(this, text);
-		this._element.className = 'm3_message';
-
-		console.debug(this.height);
 
 		this.margin = 4;
 		this.padding = 8; // from m3script.css
@@ -750,12 +755,11 @@ enchant.m3.Message =  enchant.Class.create(enchant.Label, {
  * @param padding {Number}
  * @param margin {Number} (optional)
  */
-enchant.m3.Message.prototype.applyPadding = function(padding, margin) {
+enchant.m3.RoundLabel.prototype.applyPadding = function(padding, margin) {
 	if (padding != undefined) this.padding = padding;
 	if (margin != undefined) this.margin = margin;
 
 	this.x = this.margin;
-	console.debug(this.width + ', ' + this.padding + ', ' + this.margin);
 	this.width = this.width - this.padding * 2 - this.margin * 2;
 };
 
@@ -763,7 +767,7 @@ enchant.m3.Message.prototype.applyPadding = function(padding, margin) {
  * 表示位置をセットする
  * @param options {Object}
  */
-enchant.m3.Message.prototype.setPosition = function(options) {
+enchant.m3.RoundLabel.prototype.setPosition = function(options) {
 	if (options != undefined) {
 
 		if (options.x != undefined) {
@@ -775,6 +779,26 @@ enchant.m3.Message.prototype.setPosition = function(options) {
 		}
 	}
 };
+
+/**
+ * メッセージウィンドウ
+ */
+enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
+	/**
+	 * @param text {String}
+	 * @param options {Object}
+	 * @param width {Number} of game screen
+	 * @param height {Number} of game screen
+	 * @param y_ratio {Number}	y = height * y_ratio
+	 */
+	initialize: function(text, options) {
+		RoundLabel.call(this, text, options);
+		this._element.className = 'm3_message';
+
+		// タッチしたら「次へ進む」
+		this.addEventListener(enchant.Event.TOUCH_END, playNext);
+	}
+});
 
 /**
  * 単なるテキストの追加だけでなく、セリフの追加を想定している
@@ -794,21 +818,21 @@ enchant.m3.Message.prototype.addMessage = function(text, name) {
 /**
  * メッセージ履歴ウィンドウ
  */
-enchant.m3.MsgHistory = enchant.Class.create(enchant.m3.Message, {
+enchant.m3.MsgHistory = enchant.Class.create(enchant.m3.RoundLabel, {
 
 	initialize: function(text, options) {
-		Message.call(this, text, options);
+		RoundLabel.call(this, text, options);
 		this._element.className = 'm3_msghistory';
 	}
 });
 
 /**
- * 選択肢ウィンドウ
+ * 選択ウィンドウ
  */
-enchant.m3.Selection = enchant.Class.create(enchant.m3.Message, {
+enchant.m3.Selection = enchant.Class.create(enchant.m3.RoundLabel, {
 
-	initialize: function(text) {
-		Message.call(this, text);
+	initialize: function(text, options) {
+		RoundLabel.call(this, text, options);
 		this._element.className = 'm3_selection';
 	}
 });
@@ -818,18 +842,19 @@ enchant.m3.Selection.prototype.NO_FUNCTION = function() {
 };
 
 /**
- * 選択肢
+ * 選択肢ボタン
  */
-enchant.m3.SelOption = enchant.Class.create(enchant.m3.Message, {
+enchant.m3.SelOption = enchant.Class.create(enchant.m3.RoundLabel, {
 
-	initialize: function(label, linkTo) {
-		Message.call(this, label);
+	initialize: function(label, linkTo, options) {
+		RoundLabel.call(this, label, options);
 		this._element.className = 'm3_seloption';
 
 		this.applyPadding(8, 32); // from m3script.css
 
+		// タッチしたら「リンク先へ移動」
 		this.addEventListener(enchant.Event.TOUCH_END, function() {
-			location.href = linkTo;
+			if (linkTo != undefined) location.href = linkTo;
 		});
 	}
 });
