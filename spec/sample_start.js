@@ -18,14 +18,18 @@ s.images = {
 
 s.sequence = {
 	1: {
-		bg: 'title'
+		bg: 'title',
+		msg: '< HIT SPACE/ENTER KEY >'
 	},
 	2: {
 		select: {
-			msg: 'What do you do ?',
+			msg: 'This is selection.<br>What do you do ?',
 			options: {
 			    1: { label: 'Start', linkTo: 'sample.html?scene1' },
-			    2: { label: 'Exit', linkTo: 'http://www.google.com/' }
+			    2: { label: 'Exit', linkTo: 'http://www.google.com/' },
+			    3: { label: 'option 3', linkTo: '.'},
+			    4: { label: 'option 4', linkTo: '.'},
+			    5: { label: 'option 5', linkTo: '.'}
 			}
 		}
 	}

@@ -124,21 +124,21 @@ describe('M3Script', function() {
 	});
 
 	describe('Message', function() {
-		it ('Its default position and size -> x:5, y:5, width:300', function() {
+		it ('Its default position and size -> x:4, y:0, width:276', function() {
 			var game = new Game();
 			var default_msg = new Message();
-			expect(default_msg.x).toEqual(5);
-			expect(default_msg.y).toEqual(5);
-			expect(default_msg.width).toEqual(300);
+			expect(default_msg.x).toEqual(4);
+			expect(default_msg.y).toEqual(0);
+			expect(default_msg.width).toEqual(276);
 		});
+	});
 
-		it ('Its standard(game window = 320 x 320) position and size -> x:6, y:240, width:308', function() {
-			var game = new Game();
-			var standard_msg = new Message(320, 320);
-			expect(standard_msg.x).toEqual(6);
-			expect(standard_msg.y).toEqual(240);
-			expect(standard_msg.width).toEqual(308);
-		});
+	describe('Selection', function() {
+		// TODO:
+	});
+
+	describe('SelOption', function() {
+		// TODO:
 	});
 
 	describe('Utility Functions', function() {

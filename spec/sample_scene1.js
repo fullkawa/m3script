@@ -64,6 +64,6 @@ s.sequence = {
 		msg: '- THE END -'
 	}
 };
-s.eos = '<span class="command" onclick="playNext();">&nbsp;&gt;&gt;&gt; click to next</span>';
+s.eos = '<span class="m3_command" onclick="playNext();">&nbsp;&gt;&gt;&gt; click to next</span>';
 
 s.start();

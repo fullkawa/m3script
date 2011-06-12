@@ -14,6 +14,14 @@
 
 enchant.m3 = {};
 
+/*
+ * TODO: "次へ"等のelement化＋addEventListener
+ *
+ * TODO: リファクタリング
+ *  - 画面要素(画像、キャラ、文字…)取得の関数化(?)
+ *  -
+ */
+
 /**
  * 使用画像のURLを管理するクラス
  * > Utility class to get image URL
@@ -189,7 +197,7 @@ enchant.m3.Scenario.prototype = {
 							}
 						});
 
-						sp[s.MSG] = new Message(game.width, game.height);
+						sp[s.MSG] = new Message('', { y: game.height * 0.75 });
 						sp[s.MSG] = s.getMessage(d, sp[s.MSG]);
 
 						s.doClear(d, sp);
@@ -201,7 +209,7 @@ enchant.m3.Scenario.prototype = {
 								if (layer == s.MSG) {
 									if (cld.text.length > 0) {
 										if (game.seq.length < s._seqcount) {
-											s.addMessage(cld, s.eos);
+											cld.addMessage(s.eos);
 										}
 										sn.addChild(cld);
 									}
@@ -211,11 +219,11 @@ enchant.m3.Scenario.prototype = {
 								}
 
 								if (cld instanceof Figure) {
-									s.addMessage(sp[s.MSG], cld[s.MSG], cld['name']);
+									sp[s.MSG].addMessage(cld[s.MSG], cld['name']);
 								}
 
 								if (game.seq.length == s._seqcount && s.eog != undefined) {
-									s.addMessage(cld, s.eog);
+									sp[s.MSG].addMessage(s.eog);
 								}
 							}
 						}
@@ -301,6 +309,8 @@ enchant.m3.Scenario.prototype = {
 	},
 
 	/**
+	 * @deprecated
+	 *
 	 * @param msg {Message}
 	 * @param text {String}	i.e. message
 	 * @param name {String}	name in message dialog
@@ -317,32 +327,40 @@ enchant.m3.Scenario.prototype = {
 	getMessage: function(d, msg) {
 		var text = d[this.MSG];
 		if (text != undefined && text.length > 0) {
-			this.addMessage(msg, text);
+			msg.addMessage(text);
 		}
 		return msg;
 	},
 
 	getSelection: function(d) {
-		var lbl;
+		var grp = new Group();
 		var slct = d['select'];
 		if (slct != undefined) {
 			var msg = slct['msg'];
-			var opts = slct['options'];
-			if (opts != undefined) {
+			if (slct['options'] != undefined) {
+				/*
 				lbl = new Message(Math.floor(this._game.width / 2), this._game.height, 0.4);
 				lbl.x = this._game.width / 4;
+				*/
 				if (msg != undefined) {
-					lbl.text = msg;
+					//lbl.text = msg;
+					var sel = new Selection(msg);
+					sel._y = 60;
+					grp.addChild(sel);
 				}
-				for (var i = 1; i <= 9; i++) {
-					var opt = opts[i];
+				var opts = [];
+				for (var i = 1; i <= 5; i++) {
+					var opt = slct['options'][i];
 					if (opt != undefined && opt['label'] != undefined && opt['linkTo'] != undefined) {
-						lbl.text += '<div class="command"><a href="' + opt['linkTo'] + '">' + opt['label'] + '</a></div>';
+						//lbl.text += '<div class="m3_command"><a href="' + opt['linkTo'] + '">' + opt['label'] + '</a></div>';
+						opts[i-1] = new SelOption(opt['label'], opt['linkTo']);
+						opts[i-1]._y = sel._y + 14 + i * 38;
+						grp.addChild(opts[i-1]);
 					}
 				}
 			}
 		}
-		return lbl;
+		return grp;
 	}
 };
 /**
@@ -703,34 +721,122 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 });
 
 /**
- *
+ * メッセージウィンドウ
  */
-enchant.m3.Message = enchant.Class.create(enchant.Label, {
+enchant.m3.Message =  enchant.Class.create(enchant.Label, {
 	/**
+	 * @param text {String}
+	 * @param options {Object}
 	 * @param width {Number} of game screen
 	 * @param height {Number} of game screen
 	 * @param y_ratio {Number}	y = height * y_ratio
 	 */
-	initialize: function(width, height, y_ratio) {
-		Label.call(this, '');
+	initialize: function(text, options) {
+		Label.call(this, text);
 		this._element.className = 'm3_message';
 
-		this.x = 5;
-		if (width != undefined && typeof(width) == 'number' && width > 0) {
-			this.x = Math.floor(width * 0.02);
-			this.width = width - this.x * 2;
-		}
-		this.y = 5;
-		var yr = 0.75;
-		if (y_ratio != undefined && typeof(y_ratio) == 'number' && y_ratio > 0 && y_ratio < 1) {
-			yr = y_ratio;
-		}
-		if (height != undefined && typeof(height) == 'number' && height > 0) {
-			this.y = Math.floor(height * yr);
-		}
+		console.debug(this.height);
+
+		this.margin = 4;
+		this.padding = 8; // from m3script.css
+		this.applyPadding(this.padding, this.margin);
+
+		this.setPosition(options);
 	}
 });
 
+/**
+ * CSSでセットしたpaddingに合わせてwidthの調整等を行う
+ * @param padding {Number}
+ * @param margin {Number} (optional)
+ */
+enchant.m3.Message.prototype.applyPadding = function(padding, margin) {
+	if (padding != undefined) this.padding = padding;
+	if (margin != undefined) this.margin = margin;
+
+	this.x = this.margin;
+	console.debug(this.width + ', ' + this.padding + ', ' + this.margin);
+	this.width = this.width - this.padding * 2 - this.margin * 2;
+};
+
+/**
+ * 表示位置をセットする
+ * @param options {Object}
+ */
+enchant.m3.Message.prototype.setPosition = function(options) {
+	if (options != undefined) {
+
+		if (options.x != undefined) {
+			this.x = options.x;
+		}
+
+		if (options.y != undefined) {
+			this.y = options.y;
+		}
+	}
+};
+
+/**
+ * 単なるテキストの追加だけでなく、セリフの追加を想定している
+ * 柔軟性を求めるなら、直接 this.text に追加
+ * @param text {String}
+ * @param name {String}
+ */
+enchant.m3.Message.prototype.addMessage = function(text, name) {
+	if (name != undefined) {
+		this.text += '<span class="m3_msg_name">' + (new String(name)) + '</span><br/>';
+	}
+	if (text != undefined) {
+		this.text += new String(text) + '<br/>';
+	}
+};
+
+/**
+ * メッセージ履歴ウィンドウ
+ */
+enchant.m3.MsgHistory = enchant.Class.create(enchant.m3.Message, {
+
+	initialize: function(text, options) {
+		Message.call(this, text, options);
+		this._element.className = 'm3_msghistory';
+	}
+});
+
+/**
+ * 選択肢ウィンドウ
+ */
+enchant.m3.Selection = enchant.Class.create(enchant.m3.Message, {
+
+	initialize: function(text) {
+		Message.call(this, text);
+		this._element.className = 'm3_selection';
+	}
+});
+
+enchant.m3.Selection.prototype.NO_FUNCTION = function() {
+	// TODO:
+};
+
+/**
+ * 選択肢
+ */
+enchant.m3.SelOption = enchant.Class.create(enchant.m3.Message, {
+
+	initialize: function(label, linkTo) {
+		Message.call(this, label);
+		this._element.className = 'm3_seloption';
+
+		this.applyPadding(8, 32); // from m3script.css
+
+		this.addEventListener(enchant.Event.TOUCH_END, function() {
+			location.href = linkTo;
+		});
+	}
+});
+
+enchant.m3.SelOption.prototype.NO_FUNCTION = function() {
+	// TODO:
+};
 
 /*
  * ユーティリティとして使われる関数

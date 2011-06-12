@@ -3,8 +3,8 @@
 	z-index: 99;
 	background-color: white;
 	opacity: 0.8;
-	border-radius: 0.5em;
-	padding: 0.5em;
+	border-radius: 8px;
+	padding: 8px;
 	word-wrap: break-word;
 }
 
@@ -12,7 +12,26 @@
 	font-weight: bold;
 }
 
-.command {
+.m3_msghistory {
+	/* TODO */
+}
+
+.m3_selection {
+	background-color: white;
+	opacity: 0.8;
+	border-radius: 8px;
+	padding: 8px;
+	word-wrap: break-word;
+}
+
+.m3_seloption {
+	background-color: white;
+	cursor: pointer;;
+	border-radius: 8px;
+	padding: 8px;
+}
+
+.m3_command {
 	margin-top: 0.5em;
 	margin-left: 1em;
 	cursor: pointer;
