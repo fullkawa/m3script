@@ -677,19 +677,15 @@ enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
 				this.url = props.url;
 			}
 		}
-	},
-
-	clone: function() {
-		var cln = new Sprite(this.width, this.height);
-		cln.image = this.image;
-		cln.url = this.url;
-		cln.clone = this.clone;
-
-		return cln;
 	}
 });
+enchant.m3.Picture.prototype.clone = function() {
+	var cln = new Sprite(this.width, this.height);
+	cln.image = this.image;
+	cln.url = this.url;
+	cln.clone = this.clone;
 
-enchant.m3.Picture.prototype.NO_FUNCTIONS = function() {
+	return cln;
 };
 
 /**
@@ -710,22 +706,19 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 			this.url = props.url;
 			this.x = props.x;
 		}
-	},
-
-	clone: function() {
-		var cln = new Sprite(this.width, this.height);
-		cln.image = this.image;
-		cln.msg = this.msg;
-		cln.name = this.name;
-		cln.url = this.url;
-		cln.x = this.x;
-		cln.clone = this.clone;
-
-		return cln;
 	}
 });
 
-enchant.m3.Figure.prototype.NO_FUNCTIONS = function() {
+enchant.m3.Figure.prototype.clone = function() {
+	var cln = new Sprite(this.width, this.height);
+	cln.image = this.image;
+	cln.msg = this.msg;
+	cln.name = this.name;
+	cln.url = this.url;
+	cln.x = this.x;
+	cln.clone = this.clone;
+
+	return cln;
 };
 
 /**
@@ -827,6 +820,8 @@ enchant.m3.HistoryBtn = enchant.Class.create(enchant.m3.RoundLabel, {
 		});
 	}
 });
+enchant.m3.HistoryBtn.prototype.NO_FUNCTIONS = function() {
+};
 
 /**
  * メッセージ履歴ウィンドウ
@@ -843,6 +838,8 @@ enchant.m3.MsgHistory = enchant.Class.create(enchant.m3.RoundLabel, {
 		});
 	}
 });
+enchant.m3.MsgHistory.prototype.NO_FUNCTIONS = function() {
+};
 
 /**
  *「戻る」ボタン
@@ -857,6 +854,8 @@ enchant.m3.BackBtn = enchant.Class.create(enchant.m3.RoundLabel, {
 		this.addEventListener(enchant.Event.TOUCH_START, playBack);
 	}
 });
+enchant.m3.BackBtn.prototype.NO_FUNCTIONS = function() {
+};
 
 /**
  * 選択ウィンドウ
