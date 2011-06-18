@@ -137,7 +137,7 @@ enchant.m3.Character.prototype = {
 							this.imgdic.set(this.name, definition.images[key], definition.baseURL);
 						};
 					}
-					else if (typeof(key) == 'object') {
+					else if (typeof(key) == 'function') {
 						// TODO:
 					}
 				}
@@ -586,11 +586,10 @@ enchant.m3.NextButton = enchant.Class.create(enchant.Label, {
 		this._element.className = 'm3_command';
 
 		console.debug(this);
-		this.addEventListener(enchant.Event.TOUCH_END, playNext);
+		this.addEventListener(enchant.Event.TOUCH_START, playNext);
 	}
 });
 enchant.m3.NextButton.prototype.NO_FUNCTIONS = function() {
-	// TODO:
 };
 
 /**
@@ -691,7 +690,6 @@ enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
 });
 
 enchant.m3.Picture.prototype.NO_FUNCTIONS = function() {
-	// TODO:
 };
 
 /**
@@ -728,7 +726,6 @@ enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
 });
 
 enchant.m3.Figure.prototype.NO_FUNCTIONS = function() {
-	// TODO:
 };
 
 /**
@@ -796,7 +793,7 @@ enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
 		this._element.className = 'm3_message';
 
 		// タッチしたら「次へ進む」
-		this.addEventListener(enchant.Event.TOUCH_END, playNext);
+		this.addEventListener(enchant.Event.TOUCH_START, playNext);
 	}
 });
 
@@ -816,6 +813,22 @@ enchant.m3.Message.prototype.addMessage = function(text, name) {
 };
 
 /**
+ * 履歴ウィンドウボタン
+ */
+enchant.m3.HistoryBtn = enchant.Class.create(enchant.m3.RoundLabel, {
+
+	initialize: function(text, options) {
+		RoundLabel.call(this, text, options);
+		this._element.className = 'm3_historybtn';
+
+		// タッチしたら、履歴ウィンドウが開く
+		this.addEventListener(enchant.Event.TOUCH_START, function() {
+			// TODO:
+		});
+	}
+});
+
+/**
  * メッセージ履歴ウィンドウ
  */
 enchant.m3.MsgHistory = enchant.Class.create(enchant.m3.RoundLabel, {
@@ -823,6 +836,25 @@ enchant.m3.MsgHistory = enchant.Class.create(enchant.m3.RoundLabel, {
 	initialize: function(text, options) {
 		RoundLabel.call(this, text, options);
 		this._element.className = 'm3_msghistory';
+
+		// タッチしたら、履歴ウィンドウをたたむ
+		this.addEventListener(enchant.Event.TOUCH_START, function() {
+			// TODO:
+		});
+	}
+});
+
+/**
+ *「戻る」ボタン
+ */
+enchant.m3.BackBtn = enchant.Class.create(enchant.m3.RoundLabel, {
+
+	initialize: function(text, options) {
+		RoundLabel.call(this, text, options);
+		this._element.className = 'm3_backbtn';
+
+		// タッチしたら「戻る」
+		this.addEventListener(enchant.Event.TOUCH_START, playBack);
 	}
 });
 
@@ -837,8 +869,7 @@ enchant.m3.Selection = enchant.Class.create(enchant.m3.RoundLabel, {
 	}
 });
 
-enchant.m3.Selection.prototype.NO_FUNCTION = function() {
-	// TODO:
+enchant.m3.Selection.prototype.NO_FUNCTIONS = function() {
 };
 
 /**
@@ -853,14 +884,13 @@ enchant.m3.SelOption = enchant.Class.create(enchant.m3.RoundLabel, {
 		this.applyPadding(8, 32); // from m3script.css
 
 		// タッチしたら「リンク先へ移動」
-		this.addEventListener(enchant.Event.TOUCH_END, function() {
+		this.addEventListener(enchant.Event.TOUCH_START, function() {
 			if (linkTo != undefined) location.href = linkTo;
 		});
 	}
 });
 
-enchant.m3.SelOption.prototype.NO_FUNCTION = function() {
-	// TODO:
+enchant.m3.SelOption.prototype.NO_FUNCTIONS = function() {
 };
 
 /*
