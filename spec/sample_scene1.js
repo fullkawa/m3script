@@ -15,11 +15,13 @@ var miku = new Character('miku', {
 	images: {
 		'default': {
 			img: 'miku_00.png',
-			fs: 400,
-			ks: 306,
-			ws: 180,
-			bs: 125,
-			cu: 100
+			shots: {
+				fs: { baseY: 400, scale: 1},
+				ks: { baseY: 306, scale: 1},
+				ws: { baseY: 180, scale: 1},
+				bs: { baseY: 125, scale: 1},
+				cu: { baseY: 100, scale: 1}
+			}
 		},
 		'half_smile': 'miku_01.png',
 		'smile': 'miku_02.png',
@@ -30,7 +32,7 @@ var miku = new Character('miku', {
 
 s.baseURL = 'http://m3itfc.appspot.com/';
 s.images = {
-	'bg_3D': 'img_test/HNI_0004.MPO',
+	// 'bg_3D': 'img_test/HNI_0004.MPO',
 	'bg01': 'Bg_512.jpg',
 	'bg01a': {
 		base: 'bg01',
@@ -43,7 +45,7 @@ s.images = {
 s.sequence = {
 	1: {
 		transition: 'fadein',
-		bg: 'bg01',
+		bg: s.img('bg01'),
 		l1: miku.say('Hello, world !').as('[ miku ]'),
 		audio: {
 			src: 'audio/tetete.mp3',
@@ -55,7 +57,7 @@ s.sequence = {
 	},
 	3: {
 		transition: 'fadeout',
-		bg: 'bg01a',
+		bg: s.img('bg01a'),
 		l1: miku.wiz('smile'),
 		audio: 'audio/se01.mp3'
 	},

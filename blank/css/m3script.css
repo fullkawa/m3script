@@ -1,11 +1,15 @@
 
-.m3_message {
-	z-index: 99;
-	background-color: white;
-	opacity: 0.8;
+.round_label {
 	border-radius: 8px;
 	padding: 8px;
+}
+
+.m3_message {
+	z-index: 90;
+	background-color: white;
+	opacity: 0.8;
 	word-wrap: break-word;
+	cursor: pointer;
 }
 
 .m3_msg_name {
@@ -13,15 +17,20 @@
 }
 
 .m3_historybtn {
-	/* TODO */
+	z-index: 94;
+	cursor: pointer;
+	background-color: white;
+	opacity: 1;
 }
 
-.m3_msghistory {
-	/* TODO */
+.m3_historymsg {
 }
 
 .m3_backbtn {
-	/* TODO */
+	z-index: 96;
+	cursor: pointer;
+	background-color: white;
+	opacity: 1;
 }
 
 .m3_selection {

@@ -14,74 +14,6 @@
 
 enchant.m3 = {};
 
-/*
- * TODO: "次へ"等のelement化＋addEventListener
- *
- * TODO: リファクタリング
- *  - 画面要素(画像、キャラ、文字…)取得の関数化(?)
- *  -
- */
-
-/**
- * 使用画像のURLを管理するクラス
- * > Utility class to get image URL
- */
-enchant.m3.ImageDic = function() {
-	this.urls = {};
-};
-enchant.m3.ImageDic.prototype = {
-	/**
-	 * 画像URLを登録する
-	 * > Set image URL
-	 *
-	 * @param {String} key
-	 *   シナリオ内で指定するときの名前
-	 *   > key is name in scenario.
-	 *
-	 * @param {String/Object} value
-	 *   {String}の場合、それは画像URLとみなす
-	 *   > If value is string, it is URL of image.
-	 *   {Object}の場合、そのimgプロパティを画像URLとみなす
-	 *   > If valule is object, its 'img' property is URL of image.
-	 *
-	 * @param {String} baseURL (optional)
-	 *                  baseURL is optional, it added before url
-	 */
-	set: function(key, value, baseURL) {
-		var url;
-		if (typeof(value) == 'string') {
-			url = value;
-		} else {
-			if (value != undefined && value.img != undefined && typeof(value.img) == 'string')
-			url = value.img;
-		}
-		if (url != undefined) {
-			var fullURL = getFullURL(url, baseURL);
-			if (this.urls[key] != undefined && this.urls[key] != fullURL) {
-				console.warn('key:' + key + ' is already registed by other value.');
-			}
-			this.urls[key] = fullURL;
-		}
-		else {
-			console.warn('Failed to get url. value is ...');
-			console.debug(value);
-		}
-	},
-
-	/**
-	 * Game.preload の引数となる、画像URL配列を取得する
-	 *
-	 * @return {Array}
-	 */
-	getURLArray: function() {
-		var arr = [];
-		for (var key in this.urls) {
-			arr.push(this.urls[key]);
-		}
-		return arr;
-	}
-};
-
 /**
  * [ キャラクター定義 ]
  *  シナリオ中に登場するキャラクターはすべてこのクラスのオブジェクトと
@@ -102,46 +34,204 @@ enchant.m3.ImageDic.prototype = {
  *  ライブラリを提供する予定です。
  */
 enchant.m3.Character = function(name, definition) {
+	/**
+	 * キャラクター名(識別子)
+	 * @type {String}
+	 */
 	this.id = name;
-	this.name = name;
-	this.definition = definition;
 
+	/**
+	 * キャラクターが現在取っているポーズの名前
+	 * 画像ファイルを取得する祭のキーとなる
+	 * @type {String}
+	 */
 	this.key = '';
-	this.xpos = this.POSITION.indexOf('CENTER');
-	this.xoffset = 0;
+
+	/**
+	 * キャラクターが現在取っているポーズの画像ファイルURL
+	 * @type {String}
+	 */
+	this.url = '';
+
+	/**
+	 * キャラクターのショット(表示範囲)
+	 * @see this.prototype.SHOT_TYPES
+	 * @type {String}
+	 */
+	this.shot_type = this.defaultShotType;
+
+	/**
+	 * キャラクターの立ち位置＝X(横)軸方向の表示位置
+	 * @see this.prototype.POSITIONS
+	 * @type {Number}
+	 */
+	this.posX = this.POSITIONS.indexOf('CENTER');
+
+	/**
+	 * キャラクターの表示位置オフセット
+	 * @type {Number}
+	 */
+	this.offsetX = 0;
+	this.offsetY = 0;
+
+	/**
+	 * メッセージウィンドウに表示されるキャラクター名
+	 * ※作中にて変更可能
+	 */
+	this.name = name;
+
+	/**
+	 * キャラクターの現在の台詞
+	 */
 	this.msg = '';
 
-	this.imgdic = new ImageDic();
+	/**
+	 * キャラクター定義
+	 * @type {Object}
+	 */
+	this._defImg = {};
 	this.addDefinition(definition);
 
+	/**
+	 * メソッドチェーンでプロパティを引き継ぐためのコピー
+	 */
 	this._self = this;
 };
 enchant.m3.Character.prototype = {
 		/**
+		 * キャラクターの立ち位置＝X(横)軸方向の表示位置
 		 * X position of character
-		 *   Not a numeric, it is ratio for screen width.
+		 *
+		 *   座標ではなく、ゲームスクリーン幅を等分割しての指定となります
+		 *   Not coordinates, it is ratio for screen width.
+		 *
+		 *   'LEFT_EDGE'はスクリーンの左端です。キャラ画像の中心＝左端のため、右半分だけが表示されることになります
 		 *   'LEFT_EDGE' is on left edge of screen. It shows right half of character.
+		 *
+		 *   'LEFT', 'CENTER', 'RIGHT'は画面にキャラが三人並んだ時のそれぞれの位置のイメージです
 		 *   'LEFT', 'CENTER' and 'RIGHT' is position in 3 person.
+		 *
+		 *   同様に、'LEFT2', 'RIGHT2'は二人並んだ時の位置のイメージとなります
 		 *   'LEFT2', 'RIGHT2' is postion in 2 person.
 		 */
-		POSITION: ['LEFT_EDGE', 'LEFT', 'LEFT2', 'CENTER', 'RIGHT2', 'RIGHT', 'RIGHT_EDGE'],
+		POSITIONS: ['LEFT_EDGE', 'LEFT', 'LEFT2', 'CENTER', 'RIGHT2', 'RIGHT', 'RIGHT_EDGE'],
 
+		/**
+		 * キャラクターのショット(表示範囲)
+		 *
+		 * cu: Close Up 顔(クローズアップ)
+		 * bs: Bust Shot 胸から上
+		 * ws: Waist Shot 腰から上
+		 * ks: Knee Shot ひざから上
+		 * fs: Full Shot 全身
+		 */
+		SHOT_TYPES: ['cu', 'bs', 'ws', 'ks', 'fs'],
+
+		/**
+		 * 指定がないときのショット
+		 */
+		defaultShotType: 'ws',
+
+		/**
+		 * キャラ定義を追加/上書きします
+		 */
 		addDefinition: function(definition) {
-			if (definition != undefined && definition.images != undefined) {
-				for (var key in definition.images) {
-					if (typeof(key) == 'string') {
-						var urlKey = this.getURLKey(this.id, key);
-						this.imgdic.set(urlKey, definition.images[key], definition.baseURL);
-
-						if (this.imgdic.urls[this.name] == undefined) {
-							this.imgdic.set(this.name, definition.images[key], definition.baseURL);
-						};
-					}
-					else if (typeof(key) == 'function') {
-						// TODO:
+			if (definition != undefined) {
+				var def_images = definition.images;
+				if (def_images != undefined) {
+					for (key in def_images) {
+						// デフォルトのポーズ名設定
+						if (this.key == undefined || this.key.length == 0) this.key = key;
+						this._defImg[key] = this.normalizeDefinition(def_images[key], definition.baseURL);
 					}
 				}
 			}
+		},
+
+		/**
+		 * キャラ定義を正規化します
+		 * ここでいう正規化とは、簡易定義も詳細定義も同じフォーマットにすることです
+		 *
+		 * [フォーマット]
+		 *   ショット名
+		 *     url
+		 *     baseY
+		 *     scale
+		 *
+		 * @param {Object} def ポーズごとの定義
+		 */
+		normalizeDefinition: function(def, baseURL) {
+			var defimg = {};
+			if (typeof(def) == 'string') {
+				// 簡易的な定義
+				defimg[this.defaultShotType] = { url: getFullURL(def, baseURL) };
+			}
+			else {
+				// 詳細な定義
+				var shots = def.shots;
+				for (shot_type in shots) {
+					defimg[shot_type] = shots[shot_type];
+					defimg[shot_type].url = getFullURL(def.img, baseURL);
+				}
+			}
+			return defimg;
+		},
+
+		/**
+		 * @return キャラクタ表示プロパティ一式 character properties
+		 *
+		 *   key: ポーズ名
+		 *
+		 *   url: 画像URL(＝Game.assetsのキー)
+		 *        key of Game.assets
+		 *
+		 *   ratioX: キャラクターのX(横)軸方向の表示位置　※画面幅に対する比率
+		 *         position of character
+		 *
+		 *   baseY: キャラクタ表示時、下限のY座標。ショットによって異なる
+		 *
+		 *   scale: 表示倍率。ショットによって異なる
+		 *
+		 *   offsetX, offsetY: 表示位置のオフセット
+		 *                     position offset
+		 */
+		getProps: function() {
+			var def = this._defImg[this.key][this.shot_type];
+
+			var scale = 1;
+			var baseY = 0;
+			// ↑FIXME: 簡易定義のときは画像の下端(height)にしたいのだが…
+			if (def != undefined) {
+				if (def.scale != undefined) scale = def.scale;
+				if (def.baseY != undefined) baseY = def.baseY * scale;
+			}
+			var props = {
+				key: this.key,
+				url: def.url,
+				ratioX: this.posX / (this.POSITIONS.length - 1),
+				baseY: baseY,
+				scale: scale,
+				offsetX: this.offsetX,
+				offsetY: this.offsetY
+			};
+			return props;
+		},
+
+		/**
+		 * @return 台詞 character words
+		 *
+		 *   name: メッセージウィンドウに表示されるときの名前
+		 *         name in message window
+		 *
+		 *   msg: メッセージウィンドウに表示される文章(＝セリフ)
+		 *        message in message window
+		 */
+		getWords: function () {
+			var words = {
+				name: this.name,
+				msg: this.msg
+			};
+			return words;
 		},
 
 		/**
@@ -158,111 +248,63 @@ enchant.m3.Character.prototype = {
 			return cln;
 		},
 
-		getURLKey: function(id, key) {
-			var urlKey = id;
-			if (key != undefined && key.length > 0) {
-				urlKey += '.' + key;
-			}
-			return urlKey;
-		},
-
-		/**
-		 * @returns character properties
-		 *   key: key of ImageDic
-		 *   url: key of Game.assets
-		 *   xpos: position of character
-		 *   name: name in message dialog
-		 *   msg: message in message dialog
-		 */
-		getProps: function(doClearMsg) {
-			var urlKey = this.getURLKey(this.id, this.key);
-			var props = {
-				key:  urlKey,
-				url: this.imgdic.urls[urlKey],
-				xpos: this.xpos,
-				name: this.name,
-				msg: this.msg
-			};
-			return props;
-		},
-
 		say: function(msg) {
-			this.msg = msg;
-			this._self.msg = msg;
+			this.msg = this._self.msg = msg;
 			return this.clone();
 		},
 		as: function(name) {
-			this.name = name;
-			this._self.name = name;
+			this.name = this._self.name = name;
 			return this.clone();
 		},
 		is: function() {
 			return this.clone();
 		},
 		act: function(key) {
-			this.key = key;
-			this._self.key = key;
+			this.key = this._self.key = key;
 			return this.clone();
 		},
 		wiz: function(key) {
-			this.key = key;
-			this._self.key = key;
+			this.key = this._self.key = key;
 			return this.clone();
 		},
 		/**
 		 * left position with 3 person
 		 */
 		onLeft: function(offset) {
-			this.xpos = this.POSITION.indexOf('LEFT');
-			this._self.xpos = this.xpos;
-			if (offset != undefined) {
-				this.xoffset = offset;
-				this._self.xoffset = offset;
-			}
-			return this.clone();
+			this.posX = this._self.posX = this.POSITIONS.indexOf('LEFT');
+			return this.withOffset(offset);
 		},
 		/**
 		 * left position with 2 person
 		 */
 		onLeft2: function(offset) {
-			this.xpos = this.POSITION.indexOf('LEFT2');
-			this._self.xpos = this.xpos;
-			if (offset != undefined) {
-				this.xoffset = offset;
-				this._self.xoffset = offset;
-			}
-			return this.clone();
+			this.posX = this._self.posX = this.POSITIONS.indexOf('LEFT2');
+			return this.withOffset(offset);
 		},
 		onCenter: function(offset) {
-			this.xpos = this.POSITION.indexOf('CENTER');
-			this._self.xpos = this.xpos;
-			if (offset != undefined) {
-				this.xoffset = offset;
-				this._self.xoffset = offset;
-			}
-			return this.clone();
+			this.posX = this._self.posX = this.POSITIONS.indexOf('CENTER');
+			return this.withOffset(offset);
 		},
 		/**
 		 * right position with 3 person
 		 */
 		onRight: function(offset) {
-			this.xpos = this.POSITION.indexOf('RIGHT');
-			this._self.xpos = this.xpos;
-			if (offset != undefined) {
-				this.xoffset = offset;
-				this._self.xoffset = offset;
-			}
-			return this.clone();
+			this.posX = this._self.posX = this.POSITIONS.indexOf('RIGHT');
+			return this.withOffset(offset);
 		},
 		/**
 		 * right position with 2 person
 		 */
 		onRight2: function(offset) {
-			this.xpos = this.POSITION.indexOf('RIGHT2');
-			this._self.xpos = this.xpos;
-			if (offset != undefined) {
-				this.xoffset = offset;
-				this._self.xoffset = offset;
+			this.posX = this._self.posX = this.POSITIONS.indexOf('RIGHT2');
+			return this.withOffset(offset);
+		},
+		withOffset: function(x, y) {
+			if (x != undefined) {
+				this.offsetX = this._self.offsetX = x;
+			}
+			if (y != undefined) {
+				this.offsetY = this._self.offsetY = y;
 			}
 			return this.clone();
 		}
@@ -273,21 +315,35 @@ enchant.m3.Character.prototype = {
  * > Scenario data
  */
 enchant.m3.Scenario = function() {
-	this._sequence;
-	this._seqcount;
-	this._game;
-	this.imgdic = new ImageDic();
-
 	/**
 	 * @type {String]
-	 *   URLの記述を短縮するために、共通部分を指定することが出来る。
+	 * URLの記述を短縮するために、共通部分を指定することが出来る。
 	 */
-	this.baseURL;
+	this.baseURL = '';
+
+	/**
+	 * [ 使用する画像の定義 ]
+	 * @type {Object}
+	 *
+	 * key:
+	 *   シナリオ内で指定するときの名前
+	 *   > key is name in scenario.
+	 *
+	 * value:
+	 *   画像URL
+	 *   > image URL
+	 */
+	this.images = {};
+
+	/**
+	 * [ シナリオ定義 ]
+	 */
+	this.sequence = {};
 
 	/**
 	 * @type {String}
-	 *   すべての文末に付ける文字列。HTMLタグも使用可能。
-	 *   > End Of Sentence. HTML tags available.
+	 * すべての文末に付ける文字列。HTMLタグも使用可能。
+	 * > End Of Sentence. HTML tags available.
 	 */
 	this.eos = '';
 };
@@ -298,38 +354,24 @@ enchant.m3.Scenario.prototype = {
 	MAX_SEQUENCE_NO: 999,
 
 	/**
-	 * レイヤ名
-	 * 左から順に、上へ積まれていく
-	 */
-	LAYERS: ['bg', 'l1', 'l2', 'l3'],
-
-	MSG: 'msg',
-	SELECT: 'select',
-
-	/**
-	 * キャラクターのショット(表示範囲)
+	 * @return {Object} 画像(一枚絵・背景)表示プロパティ一式
 	 *
-	 * CU: Close Up 顔(クローズアップ)
-	 * BS: Bust Shot 胸から上
-	 * WS: Waist Shot 腰から上
-	 * KS: Knee Shot ひざから上
-	 * FS: Full Shot 全身
+	 * @param {String} key imagesのキー
 	 */
-	SHOT_TYPES: ['CU', 'BS', 'WS', 'KS', 'FS'],
+	img: function(key) {
+		var props = { fitScreen: true };
 
-	/**
-	 * 指定がないときのショット
-	 */
-	defaultShotType: 'WS',
+		var value = this.images[key];
+		if (value != undefined) {
+			if (typeof(value) == 'string') {
+				props.url = getFullURL(value, this.baseURL);
+			}
+			else {
+				// TODO: 差分定義
+			}
+		}
 
-	initialize: function(game) {
-		game.seq = [];
-		game.seqNo = 0;
-
-		game.keybind(13, 'a'); // enter key
-		game.keybind(32, 'a'); // space key
-		game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
-		return game;
+		return props;
 	},
 
 	/**
@@ -337,389 +379,449 @@ enchant.m3.Scenario.prototype = {
 	 * > play on new game
 	 */
 	start: function() {
-		var s = this;
+		var scenario = this;
 		window.onload = function() {
-			s._game = new Game();
-			var game = s.initialize(s._game);
+			var game = new Game();
+			var player = new Player(game, scenario);
+			player.start();
+		};
+	}
+};
 
-			game.keybind(13, 'a'); // enter key
-			game.keybind(32, 'a'); // space key
-			game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
+/**
+ * 与えられたgameオブジェクトにてシナリオを再生する
+ * 既存のgameオブジェクトを渡すことにより、カットバック的な使い方も可能？
+ */
+enchant.m3.Player = function(game, scenario) {
+	this._game = game;
 
-			game.keybind(66, 'b'); // 'b' key
-			game.addEventListener(enchant.Event.B_BUTTON_DOWN, playBack);
+	/**
+	 * 画像バンク
+	 * key, value {String} 画像URL
+	 */
+	this.imgs = {};
 
-			s._seqcount = getLength(s.sequence);
+	/**
+	 * ゲーム画面に表示されている画像要素
+	 */
+	this.layers = new Layers(this.LAYERS);
 
-			var imgURLs = s.imgdic.getURLArray();
-			game.preload(imgURLs);
+	/**
+	 * メッセージウィンドウ
+	 */
+	this.msg = new Message();
 
-			game.onload = function() {
-				var sps = [];
-				for (var i = 1; i <= s.MAX_SEQUENCE_NO; i++) {
-					var d = s.sequence[i];
-					if (d != undefined) {
-						// console.debug('--- ' + i);
-						sps.push(new Object());
-						var sp = sps[sps.length - 1];
-						var sp_prev = undefined;
-						if (sps.length > 1) {
-							sp_prev = sps[sps.length - 2];
-						}
-						game.seq.push(new Scene());
-						var sn = game.seq[game.seq.length - 1];
+	/**
+	 * 正規化されたシーケンスデータ
+	 * this.layers に表示される
+	 */
+	this.seqs = [];
 
-						s.LAYERS.forEach(function(layer) {
-							// console.debug(i+': '+layer);
-							sp[layer] = s.getPicture(d, layer);
-							if (sp[layer] == undefined) {
-								sp[layer] = s.getFigure(d, layer);
-							}
-							if (sp[layer] == undefined && sp_prev != undefined && sp_prev[layer] != undefined) {
-								sp[layer] = sp_prev[layer].clone();
-							}
-						});
+	/**
+	 * 正規化されたメッセージデータ
+	 * this.msg に表示される
+	 */
+	this.msgqs = [];
 
-						sp[s.MSG] = new Message('', { y: game.height * 0.75 });
-						sp[s.MSG] = s.getMessage(d, sp[s.MSG]);
+	/**
+	 * 表示中のシーケンス番号
+	 */
+	this.seqNo = 0;
 
-						s.doClear(d, sp);
+	/**
+	 * ゲーム画面
+	 */
+	this.scene = this.build();
 
-						for (var layer in sp) {
-							var cld = sp[layer];
+	this.setKeybind();
 
-							if (cld != undefined) {
-								if (layer == s.MSG) {
-									if (cld.text.length > 0) {
-										if (game.seq.length < s._seqcount) {
-											//cld.addMessage(s.eos);
-											sn.addChild(new NextButton(s.eos));
-										}
-										sn.addChild(cld);
-									}
-								}
-								else {
-									sn.addChild(cld);
-								}
+	this.loadScenario(scenario);
+};
 
-								if (cld instanceof Figure) {
-									sp[s.MSG].addMessage(cld[s.MSG], cld['name']);
-								}
+enchant.m3.Player.prototype = {
+	/**
+	 * レイヤ名
+	 * 左から順に、上へ重ねられていく
+	 */
+	LAYERS: ['bg', 'l1', 'l2', 'l3'],
 
-								if (game.seq.length == s._seqcount && s.eog != undefined) {
-									sp[s.MSG].addMessage(s.eog);
-								}
-							}
-						}
+	/**
+	 * キー → ボタンへの割り当て
+	 */
+	setKeybind: function() {
+		this._game.keybind(13, 'a'); // enter key
+		this._game.keybind(32, 'a'); // space key
+		this._game.addEventListener(enchant.Event.A_BUTTON_DOWN, this.playNext);
 
-						sp[s.SELECT] = s.getSelection(d);
-						if (sp[s.SELECT] != undefined) {
-							sn.addChild(sp[s.SELECT]);
-						}
+		this._game.keybind(66, 'b'); // 'b' key
+		this._game.addEventListener(enchant.Event.B_BUTTON_DOWN, this.playBack);
+	},
+
+	/**
+	 * シナリオを読み込む
+	 * @param scenario {Scenario}
+	 */
+	loadScenario: function(scenario) {
+		/**
+		 * scenarioがオブジェクト型だったときに読み込む、最大のシーケンス番号
+		 */
+		var maxSeqNo = scenario.MAX_SEQUENCE_NO;
+
+		// scenarioが配列だったとき、最大シーケンス番号は配列の最後のインデックス
+		if (scenario.length != undefined && scenario.length > 0) {
+			maxSeqNo = scenario.length - 1;
+		}
+
+		for (var i = 0; i<=maxSeqNo; i++) {
+			var cut = scenario.sequence[i];
+			if (cut != undefined) {
+				this.seqs.push(this.getSequence(cut));
+				this.msgqs.push(this.getMessage(cut));
+			}
+		}
+	},
+
+	/**
+	 * シーケンスデータを正規化しながら取得する
+	 *
+	 * @param cut 一カット分のシナリオデータ
+	 */
+	getSequence: function(cut) {
+		var seq = {};
+
+		for (var i=0; i<this.LAYERS.length; i++) {
+			var key = this.LAYERS[i];
+			var layer = cut[key];
+			if (layer != undefined) {
+				if (layer instanceof Character) {
+					// 立ち絵の場合
+					seq[key] = layer.getProps();
+				}
+				else {
+					// 背景(一枚絵)の場合
+					seq[key] = layer;
+				}
+				this.stockImages(seq[key]);
+			}
+		}
+
+		return seq;
+	},
+
+	/**
+	 * 使用される画像URLを重複なしで保持する
+	 */
+	stockImages: function(seq) {
+		var url = seq.url;
+		if (url != undefined && typeof(url) == 'string') {
+			this.imgs[url] = url;
+		}
+	},
+
+	/**
+	 * 使用画像URLを配列で全て取得する
+	 * @return {Array}
+	 */
+	getImageURLArray: function() {
+		var arr = [];
+		for (var key in this.imgs) {
+			var url = this.imgs[key];
+			if (url != undefined && typeof(url) == 'string') arr.push(url);
+		}
+		return arr;
+	},
+
+	/**
+	 * メッセージデータを取得する
+	 *
+	 * @param cut 一カット分のシナリオデータ
+	 */
+	getMessage: function(cut, layers) {
+		var msg = "";
+		var layers = this.LAYERS.concat(['msg']);
+
+		for (var i=0; i<layers.length; i++) {
+			var key = layers[i];
+			var layer = cut[key];
+			if (layer != undefined) {
+				if (typeof(layer) == 'string' && layer.length > 0) {
+					msg += layer + '<br/>';
+				}
+				else if (layer instanceof Character) {
+					var chara = layer.getWords();
+					if (chara.msg != undefined && chara.msg.length > 0) {
+						msg += chara.name + '<br/>';
+						msg += chara.msg + '<br/>';
 					}
 				}
-				if (game.seq.length == 0) {
-					console.warn('No sequence.');
-				}
-				else {
-					game.pushScene(game.seq[0]);
-				}
-			};
-			game.start();
-		};
-	},
-	/**
-	 * シーケンスを再生する。ゲーム中でカットインとして使われる場合向け
-	 * > play on existing game
-	 * FIXME: Not test. enchant.js cannot load images on game.
-	 */
-	play: function(game) {
-		if (game == undefined || !(game instanceof Game)) {
-			throw new Error('Argument is not a game instance.');
-		}
-		this._game = game;
-		game.addEventListener(enchant.Event.A_BUTTON_DOWN, playNext);
-
-		if (game.seq.length == 0) throw new Error('No sequence exists.');
-		game.pushScene(game.seq[0]);
-	},
-
-	doClear: function(d, sp) {
-		var value = d['clear'];
-		for (var layer in sp) {
-			if ((layer != this.MSG) && (value == 'all' || value == layer)) {
-				sp[layer] = undefined;
 			}
 		}
-	},
 
-	getPicture: function(d, layer) {
-		var sp;
-		if (layer == 'bg') {
-			var value = d[layer];
-			if (value != undefined) {
-				var imgURL;
-				if (typeof(value) == 'string') {
-					imgURL = this.imgdic.urls[value];
-				}
-				else if (value.img != undefined && typeof(value.img) == 'string') {
-					imgURL = this.imgdic.urls[value.img];
-				}
-				else {
-					console.warn('No image url.');
-				}
-				var img = this._game.assets[imgURL];
-
-				sp = new Picture(this._game, img, { url: imgURL });
-			}
-		}
-		return sp;
-	},
-
-	getFigure: function(d, layer) {
-		var sp;
-		if (this.LAYERS.indexOf(layer) > 0) {
-			var value = d[layer];
-			if ((value != undefined) && (value instanceof Character == true)) {
-				var props = value.getProps();
-				if (props != undefined && props.url != undefined) {
-					var img = this._game.assets[props.url];
-					props.x = Math.floor(this._game.width / 6) * props.xpos - Math.floor(img.width / 2);
-					sp = new Figure(img, props);
-				}
-			}
-		}
-		return sp;
-	},
-
-	/**
-	 * @deprecated
-	 *
-	 * @param msg {Message}
-	 * @param text {String}	i.e. message
-	 * @param name {String}	name in message dialog
-	 */
-	addMessage: function(msg, text, name) {
-		if (name != undefined) {
-			msg.text += '<span class="m3_msg_name">' + (new String(name)) + '</span><br/>';
-		}
-		if (text != undefined) {
-			msg.text += new String(text) + '<br/>';
-		}
-	},
-
-	getMessage: function(d, msg) {
-		var text = d[this.MSG];
-		if (text != undefined && text.length > 0) {
-			msg.addMessage(text);
-		}
 		return msg;
 	},
 
-	getSelection: function(d) {
-		var grp = new Group();
-		var slct = d['select'];
-		if (slct != undefined) {
-			var msg = slct['msg'];
-			if (slct['options'] != undefined) {
-				/*
-				lbl = new Message(Math.floor(this._game.width / 2), this._game.height, 0.4);
-				lbl.x = this._game.width / 4;
-				*/
-				if (msg != undefined) {
-					//lbl.text = msg;
-					var sel = new Selection(msg);
-					sel._y = 60;
-					grp.addChild(sel);
-				}
-				var opts = [];
-				for (var i = 1; i <= 5; i++) {
-					var opt = slct['options'][i];
-					if (opt != undefined && opt['label'] != undefined && opt['linkTo'] != undefined) {
-						//lbl.text += '<div class="m3_command"><a href="' + opt['linkTo'] + '">' + opt['label'] + '</a></div>';
-						opts[i-1] = new SelOption(opt['label'], opt['linkTo']);
-						opts[i-1]._y = sel._y + 14 + i * 38;
-						grp.addChild(opts[i-1]);
-					}
-				}
+	/**
+	 * ゲーム画面を構成する
+	 *
+	 * @return {enchant.Scene} ゲーム画面
+	 */
+	build: function() {
+		var screen = new Scene();
+		screen.backgroundColor = 'black';
+
+		/*
+		 * 各画面要素の追加
+		 */
+		screen.addChild(this.layers);
+
+		screen.addChild(this.msg);
+
+		var history_btn = new HistoryBtn('履歴');
+		screen.addChild(history_btn);
+
+		var back_btn = new BackBtn('戻る');
+		screen.addChild(back_btn);
+
+		this._game.pushScene(screen);
+
+		/*
+		 * 各画面要素のレイアウト
+		 * clientWidth/Height は pushScene 後にようやく取得できる
+		 */
+		var width = this._game.width;
+		var height = this._game.height;
+		var baseY = this._game.baseY = height / (4/3);
+
+		// 各レイヤの表示位置はシーケンスにて変動するので省略
+
+		var margin = 4;
+		this.msg.x = margin;
+		this.msg.y = baseY;
+		this.msg.width = width - margin * 2;
+		this.msg.height = height - margin - baseY;
+
+		history_btn.x = width - history_btn._element.clientWidth;
+		history_btn.y = baseY - history_btn._element.clientHeight + this.msg.padding;
+
+		back_btn.x = width - back_btn._element.clientWidth;
+		back_btn.y = height - back_btn._element.clientHeight;
+
+		return screen;
+	},
+
+	/**
+	 * 次のシーケンスへ進む
+	 */
+	playNext: function() {
+		this.layers.setSequence(this.seqs[this.seqNo], this.seqs[++this.seqNo]);
+	},
+
+	playBack: function() {
+		var game;
+		if (this instanceof Game) {
+			game = this;
+		}
+		else if (this.s != undefined) {
+			// 'this' is instance of Window / DOMWindow
+			game = this.s._game;
+		}
+
+		if (game != undefined) {
+			if (game.seqNo > 0) {
+				game.seqNo--;
+				game.replaceScene(game.seq[game.seqNo]);
+				console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
 			}
 		}
-		return grp;
+		else {
+			console.warn('Cannot get a game object. "this" is ...');
+			console.debug(this);
+		}
+	},
+
+	start: function() {
+		this._game.preload(this.getImageURLArray());
+
+		var player = this;
+		this._game.onload = function() {
+			player.playNext();
+		};
+		this._game.start();
 	}
 };
-enchant.m3.Scenario.prototype.__defineSetter__('images', function(images) {
-	// Get all image URL
-	for (var key in images) {
-		this.imgdic.set(key, images[key], this.baseURL);
-	}
-});
-enchant.m3.Scenario.prototype.__defineSetter__('sequence', function(sequence) {
-	// Get all image URL
-	for (var key in sequence) {
-		var value = sequence[key];
-		var imgdic = this.imgdic;
-		this.LAYERS.forEach(function(layer) {
-			if (value[layer] != undefined) {
-				if (typeof(value[layer]) == 'string') {
-					// Got already, but...
-					if (imgdic.urls[value[layer]] == undefined) {
-						console.warn('Not regist image URL in s.images; sequence: '
-							+ key + ' > ' + layer + ', name: ' + value[layer]);
-					}
-				}
-				else if (value[layer].getProps != undefined) {
-					var props = value[layer].getProps();
-					imgdic.set(props.key, props.url);
-				}
+
+/**
+ * 画面に表示される画像要素のグループ
+ */
+enchant.m3.Layers = enchant.Class.create(enchant.Group, {
+	/**
+	 * @param {Array} layer_ids レイヤIDのセット
+	 */
+	initialize: function(layer_ids) {
+		Group.call(this);
+
+		if (layer_ids == undefined || layer_ids.length == undefined) {
+			console.warn('layer_ids is illegal.');
+		} else {
+			this.ids = layer_ids;
+
+			for (var i=0; i<this.ids.length; i++) {
+				var id = this.ids[i];
+				this[id] = new Layer(id);
+				this.addChild(this[id]);
 			}
+		}
+
+		this.addEventListener(enchant.Event.ENTER_FRAME, function() {
+			// TODO: 全レイヤに適用されるanimation/transition
 		});
 	}
-	this._sequence = sequence;
-});
-enchant.m3.Scenario.prototype.__defineGetter__('sequence', function() {
-	return this._sequence;
 });
 
-enchant.m3.NextButton = enchant.Class.create(enchant.Label, {
-	initialize: function(text) {
-		Label.call(this, text);
-		this._element.className = 'm3_command';
-
-		console.debug(this);
-		this.addEventListener(enchant.Event.TOUCH_START, playNext);
+/**
+ * シーケンス情報をセットする
+ * 処理は完全に Layer に委譲される
+ *
+ * @param seq {Object}
+ * @param next_seq {Object} (optional)
+ */
+enchant.m3.Layers.prototype.setSequence = function(seq, next_seq) {
+	for (var i=0; i<this.ids.length; i++) {
+		var id = this.ids[i];
+		this[id].setSequence(seq, next_seq);
 	}
-});
-enchant.m3.NextButton.prototype.NO_FUNCTIONS = function() {
 };
 
 /**
- * 次のシーケンスへ進む
+ * 画面に表示される一つの画像要素
+ * 他の要素と重ねて表示される
+ *
+ * 表示開始状態(img)と表示終了状態(next_img)を持ち、フレームごとに書き換える
+ * ことで、アニメーションに対応している
  */
-var playNext = function() {
-	var game = s._game;
+enchant.m3.Layer = enchant.Class.create(enchant.Group, {
+	initialize: function(layer_id) {
+		Group.call(this);
+		this.id = layer_id;
+		var game = enchant.Game.instance;
 
-	if (game != undefined) {
-		game.seqNo++;
-		if (game.seq.length > game.seqNo) {
-			game.replaceScene(game.seq[game.seqNo]);
-			console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
-		} else {
-			game.popScene();
-			game.stop();
-			console.info('Game stoped.');
+		/**
+		 * 表示開始状態
+		 * @type enchant.Sprite
+		 */
+		this.img = new Sprite(game.width, game.height);
+		this.addChild(this.img);
+
+		/**
+		 * 表示終了状態
+		 * @type enchant.Sprite
+		 */
+		this.next_img = new Sprite(game.width, game.height);
+		this.next_img.visible = false;
+		this.addChild(this.next_img);
+
+		this.addEventListener(enchant.Event.ENTER_FRAME, function() {
+			// TODO: animation/transition
+		});
+	}
+});
+
+/**
+ * シーケンス情報をセットする
+ *
+ * @param {Object} seq
+ * @param {Object} next_seq (optional)
+ */
+enchant.m3.Layer.prototype.setSequence = function(seq, next_seq) {
+	if (seq != undefined) {
+		if (seq[this.id] != undefined) this.setImage.call(this.img, seq[this.id]);
+
+		if (next_seq != undefined) {
+			if (next_seq[this.id] != undefined) this.setImage.call(this.next_img, next_seq[this.id]);
 		}
 	}
 	else {
-		console.warn('Cannot get a game object. "this" is ...');
-		console.debug(this);
+		console.warn('seq is undefined.');
 	}
 };
-var playBack = function() {
-	var game;
-	if (this instanceof Game) {
-		game = this;
-	}
-	else if (this.s != undefined) {
-		// 'this' is instance of Window / DOMWindow
-		game = this.s._game;
-	}
 
-	if (game != undefined) {
-		if (game.seqNo > 0) {
-			game.seqNo--;
-			game.replaceScene(game.seq[game.seqNo]);
-			console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
+/**
+ * 表示する画像の各プロパティをセットする
+ * this = Sprite オブジェクト
+ * @param {Object} seq = 対象レイヤのみのシーケンスデータ
+ *
+ * [セットされるプロパティ]
+ *   url	: 画像のURL
+ *   x, y, scaleX, scaleY, opacity は enchant.Sprite に準じます
+ */
+enchant.m3.Layer.prototype.setImage = function(seq) {
+	if (seq != undefined) {
+		var game = enchant.Game.instance;
+
+		if (seq['url'] != undefined) {
+			this.image = game.assets[seq['url']];
+		}
+
+		if (seq['fitScreen'] == true) {
+			enchant.m3.Layer.prototype.fitScreen.apply(this);
+		}
+		else {
+			this.width = this.image.width;
+			this.height = this.image.height;
+
+			var ratioX = seq['ratioX'];
+			if (ratioX != undefined && typeof(ratioX) == 'number') {
+				this.x = game.width * ratioX - this.width / 2;
+			}
+
+			var baseY = seq['baseY'];
+			if (baseY != undefined && typeof(baseY) == 'number') {
+				this.y = game.baseY - baseY;
+			}
+
+			var scale = seq['scale'];
+			if (scale != undefined && typeof(scale) == 'number') {
+				this.scaleX = scale;
+				this.scaleY = scale;
+			}
+		}
+
+		/**
+		 * 直接指定することが出来るプロパティ
+		 */
+		var enable_props = ['x', 'y', 'scaleX', 'scaleY', 'opacity'];
+		for (var key in enable_props) {
+			if (seq[key] != undefined) this[key] = seq[key];
 		}
 	}
 	else {
-		console.warn('Cannot get a game object. "this" is ...');
-		console.debug(this);
+		console.warn('seq is undefined.');
 	}
 };
 
 /**
- * Background image, Event CG and so on...
+ * 画像を縦あるいは横の小さい方が(ゲーム)スクリーンいっぱいになるよう
+ * 拡大/縮小する
+ * this = Sprite オブジェクト
  */
-enchant.m3.Picture = enchant.Class.create(enchant.Sprite, {
-	/**
-	 * @param container means game object
-	 * @param img
-	 * @param props
-	 */
-	initialize: function(container, img, props) {
-		var width = container.width;
-		var height = container.height;
-		Sprite.call(this, width, height);
-		if (img != undefined) {
-			try {
-				// for full image
-				// TODO: for difference
-				var trimmed_img = new Surface(width, height);
-				var offsetX = 0;
-				var offsetY = 0;
-				var whRatio_src = img.width / img.height;
-				var whRatio_dist = width / height;
-				if (whRatio_dist < whRatio_src) {
-					// cut off both side
-					offsetX = Math.floor((img.width - img.height / whRatio_dist) / 2);
-				} else {
-					// cut off ceil and floor
-					offsetY = Math.floor((img.height - img.width * whRatio_dist) / 2);
-				}
-				trimmed_img.draw(img, offsetX, offsetY, img.width - offsetX * 2, img.height - offsetY * 2, 0, 0, width, height);
-				this.image = trimmed_img;
-			}
-			catch(e) {
-				console.warn(e);
-				this.image = img;
-			}
-			if (props != undefined) {
-				this.url = props.url;
-			}
-		}
+enchant.m3.Layer.prototype.fitScreen = function() {
+	var img = this.image;
+	var trimmed_img = new Surface(this.width, this.height);
+	var offsetX = 0;
+	var offsetY = 0;
+	var whRatio_src = img.width / img.height;
+	var whRatio_dist = this.width / this.height;
+	if (whRatio_dist < whRatio_src) {
+		// cut off both side
+		offsetX = Math.floor((img.width - img.height / whRatio_dist) / 2);
+	} else {
+		// cut off ceil and floor
+		offsetY = Math.floor((img.height - img.width * whRatio_dist) / 2);
 	}
-});
-enchant.m3.Picture.prototype.clone = function() {
-	var cln = new Sprite(this.width, this.height);
-	cln.image = this.image;
-	cln.url = this.url;
-	cln.clone = this.clone;
-
-	return cln;
+	trimmed_img.draw(img, offsetX, offsetY, img.width - offsetX * 2, img.height - offsetY * 2, 0, 0, this.width, this.height);
+	this.image = trimmed_img;
 };
 
-/**
- * Character image
- */
-enchant.m3.Figure = enchant.Class.create(enchant.Sprite, {
-	/**
-	 * @param img
-	 * @param props is properties of Character object
-	 */
-	initialize: function(img, props) {
-		Sprite.call(this, img.width, img.height);
-		this.image = img;
-
-		if (props != undefined) {
-			this.msg = props.msg;
-			this.name = props.name;
-			this.url = props.url;
-			this.x = props.x;
-		}
-	}
-});
-
-enchant.m3.Figure.prototype.clone = function() {
-	var cln = new Sprite(this.width, this.height);
-	cln.image = this.image;
-	cln.msg = this.msg;
-	cln.name = this.name;
-	cln.url = this.url;
-	cln.x = this.x;
-	cln.clone = this.clone;
-
-	return cln;
-};
 
 /**
  * 角丸めされたLabel
@@ -727,47 +829,74 @@ enchant.m3.Figure.prototype.clone = function() {
 enchant.m3.RoundLabel =  enchant.Class.create(enchant.Label, {
 	/**
 	 * @param text {String}
-	 * @param options {Object}
 	 */
-	initialize: function(text, options) {
-		Label.call(this, text);
+	initialize: function(text) {
+		this._super = Label.call(this, text);
+		this._element.className = 'round_label';
 
-		this.margin = 4;
 		this.padding = 8; // from m3script.css
-		this.applyPadding(this.padding, this.margin);
+	},
 
-		this.setPosition(options);
-	}
+	/**
+     * RoundLabelのx座標.
+     * @type {Number}
+	 * @override Node.x
+	 */
+	x: {
+		get: function() {
+			return this._x;
+		},
+		set: function(x) {
+			this._x = x;
+			this._updateCoordinate();
+		}
+	},
+
+	/**
+     * RoundLabelのx座標.
+     * @type {Number}
+	 * @override Node.y
+	 */
+	y: {
+		get: function() {
+			return this._y;
+		},
+		set: function(y) {
+			this._y = y;
+			this._updateCoordinate();
+		}
+	},
+
+    /**
+     * RoundLabelの横幅.
+     * @type {Number}
+     * @override Entity.width
+     */
+    width: {
+        get: function() {
+        	return this._width;
+        },
+        set: function(width) {
+            this._style.width = (this._width = width - this.padding * 2) + 'px';
+        }
+    },
+
+    /**
+     * RoundLabelの高さ.
+     * @type {Number}
+     * @override Entity.height
+     */
+    height: {
+        get: function() {
+            return this._height;
+        },
+        set: function(height) {
+            this._style.height = (this._height = height - this.padding * 2) + 'px';
+        }
+    }
 });
 
-/**
- * CSSでセットしたpaddingに合わせてwidthの調整等を行う
- * @param padding {Number}
- * @param margin {Number} (optional)
- */
-enchant.m3.RoundLabel.prototype.applyPadding = function(padding, margin) {
-	if (padding != undefined) this.padding = padding;
-	if (margin != undefined) this.margin = margin;
-
-	this.x = this.margin;
-	this.width = this.width - this.padding * 2 - this.margin * 2;
-};
-
-/**
- * 表示位置をセットする
- * @param options {Object}
- */
-enchant.m3.RoundLabel.prototype.setPosition = function(options) {
-	if (options != undefined) {
-
-		if (options.x != undefined) {
-			this.x = options.x;
-		}
-
-		if (options.y != undefined) {
-			this.y = options.y;
-		}
-	}
+enchant.m3.RoundLabel.prototype.DUMMY = function() {
 };
 
 /**
@@ -776,32 +905,51 @@ enchant.m3.RoundLabel.prototype.setPosition = function(options) {
 enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
 	/**
 	 * @param text {String}
-	 * @param options {Object}
-	 * @param width {Number} of game screen
-	 * @param height {Number} of game screen
-	 * @param y_ratio {Number}	y = height * y_ratio
 	 */
-	initialize: function(text, options) {
-		RoundLabel.call(this, text, options);
-		this._element.className = 'm3_message';
+	initialize: function() {
+		RoundLabel.call(this);
+		this._element.className += ' m3_message';
+
+		/**
+		 * ウィンドウに現在表示されているテキスト
+		 */
+		this.text = '';
+
+		/**
+		 * ウィンドウに表示するテキスト
+		 * (文字送り中でまだ表示されていない部分も含む)
+		 */
+		this.textBuf = '';
+
+		/**
+		 * 文字送りのためのカウンタ
+		 */
+		this.cnt = 0;
+		this.addEventListener(enchant.Event.ENTER_FRAME, function() {
+			// TODO: 文字送り
+			this.cnt++;
+		});
 
 		// タッチしたら「次へ進む」
-		this.addEventListener(enchant.Event.TOUCH_START, playNext);
+		this.addEventListener(enchant.Event.TOUCH_START, enchant.m3.Player.playNext);
 	}
 });
 
 /**
- * 単なるテキストの追加だけでなく、セリフの追加を想定している
- * 柔軟性を求めるなら、直接 this.text に追加
- * @param text {String}
- * @param name {String}
+ * テキストをメッセージウィンドウに表示する
+ * @param text {String} 表示するテキスト
+ * @param name {String} 表示するのがキャラクターの台詞の場合、そのキャラクターの名前
  */
-enchant.m3.Message.prototype.addMessage = function(text, name) {
+enchant.m3.Message.prototype.setMessage = function(text, name) {
+	this.text = '';
+	this.textBuf = '';
+	this.cnt = 0;
+
 	if (name != undefined) {
-		this.text += '<span class="m3_msg_name">' + (new String(name)) + '</span><br/>';
+		this.text = '<span class="m3_msg_name">' + name + '</span><br/>';
 	}
 	if (text != undefined) {
-		this.text += new String(text) + '<br/>';
+		this.textBuf = text + '<br/>';
 	}
 };
 
@@ -810,9 +958,9 @@ enchant.m3.Message.prototype.addMessage = function(text, name) {
  */
 enchant.m3.HistoryBtn = enchant.Class.create(enchant.m3.RoundLabel, {
 
-	initialize: function(text, options) {
-		RoundLabel.call(this, text, options);
-		this._element.className = 'm3_historybtn';
+	initialize: function(text) {
+		RoundLabel.call(this, text);
+		this._element.className += ' m3_historybtn';
 
 		// タッチしたら、履歴ウィンドウが開く
 		this.addEventListener(enchant.Event.TOUCH_START, function() {
@@ -820,17 +968,17 @@ enchant.m3.HistoryBtn = enchant.Class.create(enchant.m3.RoundLabel, {
 		});
 	}
 });
-enchant.m3.HistoryBtn.prototype.NO_FUNCTIONS = function() {
+enchant.m3.HistoryBtn.prototype.DUMMY = function() {
 };
 
 /**
  * メッセージ履歴ウィンドウ
  */
-enchant.m3.MsgHistory = enchant.Class.create(enchant.m3.RoundLabel, {
+enchant.m3.HistoryMsg = enchant.Class.create(enchant.m3.RoundLabel, {
 
-	initialize: function(text, options) {
-		RoundLabel.call(this, text, options);
-		this._element.className = 'm3_msghistory';
+	initialize: function(text) {
+		RoundLabel.call(this, text);
+		this._element.className += ' m3_historymsg';
 
 		// タッチしたら、履歴ウィンドウをたたむ
 		this.addEventListener(enchant.Event.TOUCH_START, function() {
@@ -838,7 +986,7 @@ enchant.m3.MsgHistory = enchant.Class.create(enchant.m3.RoundLabel, {
 		});
 	}
 });
-enchant.m3.MsgHistory.prototype.NO_FUNCTIONS = function() {
+enchant.m3.HistoryMsg.prototype.DUMMY = function() {
 };
 
 /**
@@ -846,15 +994,15 @@ enchant.m3.MsgHistory.prototype.NO_FUNCTIONS = function() {
  */
 enchant.m3.BackBtn = enchant.Class.create(enchant.m3.RoundLabel, {
 
-	initialize: function(text, options) {
-		RoundLabel.call(this, text, options);
-		this._element.className = 'm3_backbtn';
+	initialize: function(text) {
+		RoundLabel.call(this, text);
+		this._element.className += ' m3_backbtn';
 
 		// タッチしたら「戻る」
-		this.addEventListener(enchant.Event.TOUCH_START, playBack);
+		this.addEventListener(enchant.Event.TOUCH_START, enchant.m3.Player.playBack);
 	}
 });
-enchant.m3.BackBtn.prototype.NO_FUNCTIONS = function() {
+enchant.m3.BackBtn.prototype.DUMMY = function() {
 };
 
 /**
@@ -862,13 +1010,13 @@ enchant.m3.BackBtn.prototype.NO_FUNCTIONS = function() {
  */
 enchant.m3.Selection = enchant.Class.create(enchant.m3.RoundLabel, {
 
-	initialize: function(text, options) {
-		RoundLabel.call(this, text, options);
+	initialize: function(text) {
+		RoundLabel.call(this, text);
 		this._element.className = 'm3_selection';
 	}
 });
 
-enchant.m3.Selection.prototype.NO_FUNCTIONS = function() {
+enchant.m3.Selection.prototype.DUMMY = function() {
 };
 
 /**
@@ -889,20 +1037,20 @@ enchant.m3.SelOption = enchant.Class.create(enchant.m3.RoundLabel, {
 	}
 });
 
-enchant.m3.SelOption.prototype.NO_FUNCTIONS = function() {
+enchant.m3.SelOption.prototype.DUMMY = function() {
 };
 
 /*
- * ユーティリティとして使われる関数
- * > utility functions
+ * ユーティリティとして使われるクラス、関数
+ * > utility classes and functions
  */
 
 /**
  * 取得しうるもっとも長いURL(絶対URLとは限らない)を取得する
  *
- * @type {String} url
+ * @param {String} url
  *
- * @type {String} baseURL
+ * @param {String} baseURL
  * URLに"http://"等が含まれないとき、baseURLがurlの前に追加される
  */
 function getFullURL(url, baseURL) {
@@ -927,10 +1075,16 @@ function getFullURL(url, baseURL) {
 	return fullURL;
 }
 
-function getLength(obj) {
+/**
+ * オブジェクトのプロパティをカウントする
+ * ※関数はノーカウント
+ *
+ * @return {Number} プロパティ数
+ */
+function getLength() {
 	var len = 0;
-	for (key in obj) {
-		len++;
+	for (key in this) {
+		if (typeof(this[key]) != 'function') len++;
 	}
 	return len;
 }
