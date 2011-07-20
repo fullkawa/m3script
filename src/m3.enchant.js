@@ -537,7 +537,7 @@ enchant.m3.Player.prototype = {
 	 * @param cut 一カット分のシナリオデータ
 	 */
 	getMessage: function(cut, layers) {
-		var msg = "";
+		var msg = {};
 		var layers = this.LAYERS.concat(['msg']);
 
 		for (var i=0; i<layers.length; i++) {
@@ -545,13 +545,15 @@ enchant.m3.Player.prototype = {
 			var layer = cut[key];
 			if (layer != undefined) {
 				if (typeof(layer) == 'string' && layer.length > 0) {
-					msg += layer + '<br/>';
+					msg = { msg: layer };
 				}
 				else if (layer instanceof Character) {
 					var chara = layer.getWords();
 					if (chara.msg != undefined && chara.msg.length > 0) {
-						msg += chara.name + '<br/>';
-						msg += chara.msg + '<br/>';
+						msg = {
+							name: chara.name,
+							msg: chara.msg
+						};
 					}
 				}
 			}
@@ -614,6 +616,7 @@ enchant.m3.Player.prototype = {
 	 */
 	playNext: function() {
 		this.layers.setSequence(this.seqs[this.seqNo], this.seqs[++this.seqNo]);
+		this.msg.setSequence(this.msgqs[this.seqNo]);
 	},
 
 	playBack: function() {
@@ -922,11 +925,24 @@ enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
 		this.textBuf = '';
 
 		/**
+		 * 文字送りされない、固定文字列
+		 * 台詞の主の名前など
+		 */
+		this.prefix = '';
+
+		/**
 		 * 文字送りのためのカウンタ
 		 */
 		this.cnt = 0;
+
+		/**
+		 * 文字送りの表示スピード
+		 * 小さいほど遅い
+		 */
+		this.weight = 1;
+
 		this.addEventListener(enchant.Event.ENTER_FRAME, function() {
-			// TODO: 文字送り
+			this.text = this.prefix + this.textBuf.substring(0, this.cnt * this.weight);
 			this.cnt++;
 		});
 
@@ -936,6 +952,18 @@ enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
 });
 
 /**
+ * シーケンスをセットする
+ */
+enchant.m3.Message.prototype.setSequence = function(seq) {
+	if (seq != undefined) {
+		this.setMessage(seq.msg, seq.name);
+	}
+	else {
+		console.warn('seq is undefined.');
+	}
+};
+
+/**
  * テキストをメッセージウィンドウに表示する
  * @param text {String} 表示するテキスト
  * @param name {String} 表示するのがキャラクターの台詞の場合、そのキャラクターの名前
@@ -943,10 +971,11 @@ enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
 enchant.m3.Message.prototype.setMessage = function(text, name) {
 	this.text = '';
 	this.textBuf = '';
+	this.prefix = '';
 	this.cnt = 0;
 
 	if (name != undefined) {
-		this.text = '<span class="m3_msg_name">' + name + '</span><br/>';
+		this.prefix = '<span class="m3_msg_name">' + name + '</span><br/>';
 	}
 	if (text != undefined) {
 		this.textBuf = text + '<br/>';
