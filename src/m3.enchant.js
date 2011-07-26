@@ -393,8 +393,6 @@ enchant.m3.Scenario.prototype = {
  * 既存のgameオブジェクトを渡すことにより、カットバック的な使い方も可能？
  */
 enchant.m3.Player = function(game, scenario) {
-	this._game = game;
-
 	/**
 	 * 画像バンク
 	 * key, value {String} 画像URL
@@ -438,6 +436,9 @@ enchant.m3.Player = function(game, scenario) {
 	this.setKeybind();
 
 	this.loadScenario(scenario);
+
+	var game = enchant.Game.instance;
+	game._player = this;
 };
 
 enchant.m3.Player.prototype = {
@@ -451,12 +452,14 @@ enchant.m3.Player.prototype = {
 	 * キー → ボタンへの割り当て
 	 */
 	setKeybind: function() {
-		this._game.keybind(13, 'a'); // enter key
-		this._game.keybind(32, 'a'); // space key
-		this._game.addEventListener(enchant.Event.A_BUTTON_DOWN, this.playNext);
+		var game = enchant.Game.instance;
 
-		this._game.keybind(66, 'b'); // 'b' key
-		this._game.addEventListener(enchant.Event.B_BUTTON_DOWN, this.playBack);
+		game.keybind(13, 'a'); // enter key
+		game.keybind(32, 'a'); // space key
+		game.addEventListener(enchant.Event.A_BUTTON_DOWN, this.playNext);
+
+		game.keybind(66, 'b'); // 'b' key
+		game.addEventListener(enchant.Event.B_BUTTON_DOWN, this.playBack);
 	},
 
 	/**
@@ -586,15 +589,16 @@ enchant.m3.Player.prototype = {
 		var back_btn = new BackBtn('戻る');
 		screen.addChild(back_btn);
 
-		this._game.pushScene(screen);
+		var game = enchant.Game.instance;
+		game.pushScene(screen);
 
 		/*
 		 * 各画面要素のレイアウト
 		 * clientWidth/Height は pushScene 後にようやく取得できる
 		 */
-		var width = this._game.width;
-		var height = this._game.height;
-		var baseY = this._game.baseY = height / (4/3);
+		var width = game.width;
+		var height = game.height;
+		var baseY = game.baseY = height / (4/3);
 
 		// 各レイヤの表示位置はシーケンスにて変動するので省略
 
@@ -645,13 +649,13 @@ enchant.m3.Player.prototype = {
 	},
 
 	start: function() {
-		this._game.preload(this.getImageURLArray());
+		var game = enchant.Game.instance;
+		game.preload(this.getImageURLArray());
 
-		var player = this;
-		this._game.onload = function() {
-			player.playNext();
+		game.onload = function() {
+			game._player.playNext();
 		};
-		this._game.start();
+		game.start();
 	}
 };
 
