@@ -408,7 +408,6 @@ enchant.m3.Player = function(game, scenario) {
 	 * メッセージウィンドウ
 	 */
 	this.msg = new Message();
-	console.debug(this.layers);//FIXME: delete
 	this.msg.addEventListener(enchant.Event.TOUCH_START, this.playNext);
 
 	/**
@@ -621,8 +620,15 @@ enchant.m3.Player.prototype = {
 	 * 次のシーケンスへ進む
 	 */
 	playNext: function() {
-		this.layers.setSequence(this.seqs[this.seqNo], this.seqs[++this.seqNo]);
-		this.msg.setSequence(this.msgqs[this.seqNo]);
+		var game = enchant.Game.instance;
+		var self = game._player;
+		if (self != undefined) {
+			self.layers.setSequence(self.seqs[self.seqNo], self.seqs[++self.seqNo]);
+			self.msg.setSequence(self.msgqs[self.seqNo]);
+		}
+		else {
+			console.warn('player instance is undefined.');
+		}
 	},
 
 	playBack: function() {
