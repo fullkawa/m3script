@@ -410,6 +410,8 @@ enchant.m3.Player = function(game, scenario) {
 	 * メッセージウィンドウ
 	 */
 	this.msg = new Message();
+	console.debug(this.layers);//FIXME: delete
+	this.msg.addEventListener(enchant.Event.TOUCH_START, this.playNext);
 
 	/**
 	 * 正規化されたシーケンスデータ
@@ -834,7 +836,7 @@ enchant.m3.RoundLabel =  enchant.Class.create(enchant.Label, {
 	 * @param text {String}
 	 */
 	initialize: function(text) {
-		this._super = Label.call(this, text);
+		Label.call(this, text);
 		this._element.className = 'round_label';
 
 		this.padding = 8; // from m3script.css
@@ -945,9 +947,6 @@ enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
 			this.text = this.prefix + this.textBuf.substring(0, this.cnt * this.weight);
 			this.cnt++;
 		});
-
-		// タッチしたら「次へ進む」
-		this.addEventListener(enchant.Event.TOUCH_START, enchant.m3.Player.playNext);
 	}
 });
 
@@ -993,7 +992,8 @@ enchant.m3.HistoryBtn = enchant.Class.create(enchant.m3.RoundLabel, {
 
 		// タッチしたら、履歴ウィンドウが開く
 		this.addEventListener(enchant.Event.TOUCH_START, function() {
-			// TODO:
+			console.debug('HistoryBtn / enchant.Event.TOUCH_START');
+			// TODO: タッチしたら、履歴ウィンドウが開く
 		});
 	}
 });
@@ -1011,7 +1011,8 @@ enchant.m3.HistoryMsg = enchant.Class.create(enchant.m3.RoundLabel, {
 
 		// タッチしたら、履歴ウィンドウをたたむ
 		this.addEventListener(enchant.Event.TOUCH_START, function() {
-			// TODO:
+			console.debug('HistoryMsg / enchant.Event.TOUCH_START');
+			// TODO: タッチしたら、履歴ウィンドウをたたむ
 		});
 	}
 });
