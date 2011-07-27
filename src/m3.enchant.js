@@ -778,7 +778,7 @@ enchant.m3.Layer.prototype.setImage = function(seq) {
 		}
 
 		if (seq['fitScreen'] == true) {
-			enchant.m3.Layer.prototype.fitScreen.apply(this);
+			enchant.m3.Layer.prototype.fitScreen.call(this);
 		}
 		else {
 			this.width = this.image.width;
@@ -820,6 +820,7 @@ enchant.m3.Layer.prototype.setImage = function(seq) {
  * this = Sprite オブジェクト
  */
 enchant.m3.Layer.prototype.fitScreen = function() {
+console.debug(this);
 	var img = this.image;
 	var trimmed_img = new Surface(this.width, this.height);
 	var offsetX = 0;
