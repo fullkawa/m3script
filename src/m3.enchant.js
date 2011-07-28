@@ -339,13 +339,6 @@ enchant.m3.Scenario = function() {
 	 * [ シナリオ定義 ]
 	 */
 	this.sequence = {};
-
-	/**
-	 * @type {String}
-	 * すべての文末に付ける文字列。HTMLタグも使用可能。
-	 * > End Of Sentence. HTML tags available.
-	 */
-	this.eos = '';
 };
 enchant.m3.Scenario.prototype = {
 	/**
@@ -820,7 +813,6 @@ enchant.m3.Layer.prototype.setImage = function(seq) {
  * this = Sprite オブジェクト
  */
 enchant.m3.Layer.prototype.fitScreen = function() {
-console.debug(this);
 	var img = this.image;
 	var trimmed_img = new Surface(this.width, this.height);
 	var offsetX = 0;
