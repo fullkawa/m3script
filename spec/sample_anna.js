@@ -14,6 +14,12 @@ var anna = new Character('anna', {
 	baseURL: 'http://m3itfc.appspot.com/figure/anna/',
 	images: {
 	    '基本': 'anna_0000.png', // 標準, デフォルト
+	    '基本': {
+	    	ws: {
+		    	url: 'anna_0000.png',
+		    	baseY: 460
+	    	}
+	    },
 	    'にっこり': 'anna_0001.png', // にっこり, ふふーん？
 	    'あのあのあの･･･': 'anna_0003.png', // あのあのあの･･･
 	    '困ります･･･': 'anna_0005.png', // 困ります･･･
