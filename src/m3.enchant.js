@@ -451,7 +451,7 @@ enchant.m3.Player.prototype = {
 		game.addEventListener(enchant.Event.A_BUTTON_DOWN, this.playNext);
 
 		game.keybind(66, 'b'); // 'b' key
-		game.addEventListener(enchant.Event.B_BUTTON_DOWN, this.playBack);
+		// game.addEventListener(enchant.Event.B_BUTTON_DOWN, this.playBack);
 	},
 
 	/**
@@ -578,9 +578,6 @@ enchant.m3.Player.prototype = {
 		var history_btn = new HistoryBtn('履歴');
 		screen.addChild(history_btn);
 
-		var back_btn = new BackBtn('戻る');
-		screen.addChild(back_btn);
-
 		var game = enchant.Game.instance;
 		game.pushScene(screen);
 
@@ -603,9 +600,6 @@ enchant.m3.Player.prototype = {
 		history_btn.x = width - history_btn._element.clientWidth;
 		history_btn.y = baseY - history_btn._element.clientHeight + this.msg.padding;
 
-		back_btn.x = width - back_btn._element.clientWidth;
-		back_btn.y = height - back_btn._element.clientHeight;
-
 		return screen;
 	},
 
@@ -616,34 +610,12 @@ enchant.m3.Player.prototype = {
 		var game = enchant.Game.instance;
 		var self = game._player;
 		if (self != undefined) {
-			self.layers.setSequence(self.seqs[self.seqNo], self.seqs[++self.seqNo]);
+			self.layers.setSequence(self.seqs[self.seqNo], self.seqs[self.seqNo + 1]);
 			self.msg.setSequence(self.msgqs[self.seqNo]);
+			self.seqNo++;
 		}
 		else {
 			console.warn('player instance is undefined.');
-		}
-	},
-
-	playBack: function() {
-		var game;
-		if (this instanceof Game) {
-			game = this;
-		}
-		else if (this.s != undefined) {
-			// 'this' is instance of Window / DOMWindow
-			game = this.s._game;
-		}
-
-		if (game != undefined) {
-			if (game.seqNo > 0) {
-				game.seqNo--;
-				game.replaceScene(game.seq[game.seqNo]);
-				console.info('Play: ' + game.seqNo + '/' + (game.seq.length - 1));
-			}
-		}
-		else {
-			console.warn('Cannot get a game object. "this" is ...');
-			console.debug(this);
 		}
 	},
 
@@ -1020,22 +992,6 @@ enchant.m3.HistoryMsg = enchant.Class.create(enchant.m3.RoundLabel, {
 	}
 });
 enchant.m3.HistoryMsg.prototype.DUMMY = function() {
-};
-
-/**
- *「戻る」ボタン
- */
-enchant.m3.BackBtn = enchant.Class.create(enchant.m3.RoundLabel, {
-
-	initialize: function(text) {
-		RoundLabel.call(this, text);
-		this._element.className += ' m3_backbtn';
-
-		// タッチしたら「戻る」
-		this.addEventListener(enchant.Event.TOUCH_START, enchant.m3.Player.playBack);
-	}
-});
-enchant.m3.BackBtn.prototype.DUMMY = function() {
 };
 
 /**
