@@ -610,13 +610,17 @@ enchant.m3.Player.prototype = {
 	playNext: function() {
 		var game = enchant.Game.instance;
 		var self = game._player;
-		if (self != undefined) {
-			self.layers.setSequence(self.seqs[self.seqNo], self.seqs[self.seqNo + 1]);
-			self.msg.setSequence(self.msgqs[self.seqNo]);
-			self.seqNo++;
-		}
-		else {
-			console.warn('player instance is undefined.');
+		if (self.seqNo < self.seqs.length) {
+			if (self != undefined) {
+				self.layers.setSequence(self.seqs[self.seqNo], self.seqs[self.seqNo + 1]);
+				self.msg.setSequence(self.msgqs[self.seqNo]);
+				self.seqNo++;
+			}
+			else {
+				console.warn('player instance is undefined.');
+			}
+		} else {
+			console.info('game end');
 		}
 	},
 
