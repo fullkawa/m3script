@@ -13,11 +13,14 @@ var s = new Scenario();
 var anna = new Character('anna', {
 	baseURL: 'http://m3itfc.appspot.com/figure/anna/',
 	images: {
-	    '基本': 'anna_0000.png', // 標準, デフォルト
-	    '基本': {
-	    	ws: {
-		    	url: 'anna_0000.png',
-		    	baseY: 460
+	    //'基本': 'anna_0000.png', // 標準, デフォルト
+	    '基本': { // 標準, デフォルト
+	    	img: 'anna_0000.png',
+	    	shots: {
+		    	ws: {
+			    	baseY: 460,
+			    	scale: 0.9
+		    	}
 	    	}
 	    },
 	    'にっこり': 'anna_0001.png', // にっこり, ふふーん？

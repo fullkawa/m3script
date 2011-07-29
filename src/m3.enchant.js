@@ -196,16 +196,14 @@ enchant.m3.Character.prototype = {
 		 *                     position offset
 		 */
 		getProps: function() {
-console.debug(this.key + ", " + this.shot_type);
 			var def = this._defImg[this.key][this.shot_type];
-console.debug(this._defImg);
 
 			var scale = 1;
 			var baseY = 0;
 			// ↑FIXME: 簡易定義のときは画像の下端(height)にしたいのだが…
 			if (def != undefined) {
 				if (def.scale != undefined) scale = def.scale;
-				if (def.baseY != undefined) baseY = def.baseY * scale;
+				if (def.baseY != undefined) baseY = def.baseY; // / scale;
 			}
 			var props = {
 				key: this.key,
