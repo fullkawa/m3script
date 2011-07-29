@@ -203,7 +203,7 @@ enchant.m3.Character.prototype = {
 			// ↑FIXME: 簡易定義のときは画像の下端(height)にしたいのだが…
 			if (def != undefined) {
 				if (def.scale != undefined) scale = def.scale;
-				if (def.baseY != undefined) baseY = def.baseY; // / scale;
+				if (def.baseY != undefined) baseY = def.baseY;
 			}
 			var props = {
 				key: this.key,
@@ -597,6 +597,7 @@ enchant.m3.Player.prototype = {
 		this.msg.width = width - margin * 2;
 		this.msg.height = height - margin - baseY;
 
+		history_btn.width = history_btn._element.clientWidth + 4; // そのままだと縦書きになってしまうので@Firefox
 		history_btn.x = width - history_btn._element.clientWidth;
 		history_btn.y = baseY - history_btn._element.clientHeight + this.msg.padding;
 

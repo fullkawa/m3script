@@ -7,6 +7,8 @@
 .m3_message {
 	z-index: 90;
 	background-color: white;
+	border-right: 3px solid #555555;
+	border-bottom: 3px solid #555555;
 	opacity: 0.8;
 	word-wrap: break-word;
 	cursor: pointer;
@@ -20,17 +22,12 @@
 	z-index: 94;
 	cursor: pointer;
 	background-color: white;
+	border: 1px solid #555555;
 	opacity: 1;
+	font-size: 10px;
 }
 
 .m3_historymsg {
-}
-
-.m3_backbtn {
-	z-index: 96;
-	cursor: pointer;
-	background-color: white;
-	opacity: 1;
 }
 
 .m3_selection {
@@ -46,11 +43,4 @@
 	cursor: pointer;;
 	border-radius: 8px;
 	padding: 8px;
-}
-
-.m3_command {
-	margin-top: 0.5em;
-	margin-left: 1em;
-	cursor: pointer;
-	color: blue;
 }
