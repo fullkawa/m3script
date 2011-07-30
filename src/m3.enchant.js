@@ -1068,17 +1068,3 @@ function getFullURL(url, baseURL) {
 	}
 	return fullURL;
 }
-
-/**
- * オブジェクトのプロパティをカウントする
- * ※関数はノーカウント
- *
- * @return {Number} プロパティ数
- */
-function getLength() {
-	var len = 0;
-	for (key in this) {
-		if (typeof(this[key]) != 'function') len++;
-	}
-	return len;
-}
