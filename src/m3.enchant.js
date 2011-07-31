@@ -130,7 +130,7 @@ enchant.m3.Character.prototype = {
 		/**
 		 * 指定がないときのショット
 		 */
-		defaultShotType: 'ws',
+		defaultShotType: 'cu',//'ws',
 
 		/**
 		 * キャラ定義を追加/上書きします
@@ -139,12 +139,19 @@ enchant.m3.Character.prototype = {
 			if (definition != undefined) {
 				var def_images = definition.images;
 				if (def_images != undefined) {
+					var defs = { baseURL: definition.baseURL };
+
 					for (key in def_images) {
 						// デフォルトのポーズ名設定
 						if (this.key == undefined || this.key.length == 0) this.key = key;
-						this._defImg[key] = this.normalizeDefinition(def_images[key], definition.baseURL);
+						// デフォルトのショット設定
+						if (defs.shots == undefined) {
+							defs.shots = def_images[key].shots;
+						}
+						this._defImg[key] = this.normalizeDefinition(def_images[key], defs);
 					}
 				}
+console.debug(this._defImg);
 			}
 		},
 
@@ -158,20 +165,30 @@ enchant.m3.Character.prototype = {
 		 *     baseY
 		 *     scale
 		 *
-		 * @param {Object} def ポーズごとの定義
+		 * @param {Object} definition ポーズごとの定義
+		 * @param {Object} defs デフォルトの設定
 		 */
-		normalizeDefinition: function(def, baseURL) {
+		normalizeDefinition: function(definition, defs) {
 			var defimg = {};
-			if (typeof(def) == 'string') {
+			if (typeof(definition) == 'string') {
 				// 簡易的な定義
-				defimg[this.defaultShotType] = { url: getFullURL(def, baseURL) };
+				defimg[this.defaultShotType] = { url: getFullURL(definition, defs.baseURL) };
 			}
 			else {
 				// 詳細な定義
-				var shots = def.shots;
-				for (shot_type in shots) {
-					defimg[shot_type] = shots[shot_type];
-					defimg[shot_type].url = getFullURL(def.img, baseURL);
+				var shots = definition.shots;
+				for (var i=0; i<this.SHOT_TYPES.length; i++) {
+					var shot_type = this.SHOT_TYPES[i];
+					// デフォルトの設定
+					defimg[shot_type] = clone.call(defs.shots[shot_type]);
+					defimg[shot_type].url = undefined;
+
+					if (shots != undefined && shots[shot_type] != undefined) {
+						defimg[shot_type] = shots[shot_type];
+					}
+					if (defimg[shot_type].url == undefined) {
+						defimg[shot_type].url = getFullURL(definition.img, defs.baseURL);
+					}
 				}
 			}
 			return defimg;
@@ -754,6 +771,12 @@ enchant.m3.Layer.prototype.setImage = function(seq) {
 			this.width = this.image.width;
 			this.height = this.image.height;
 
+			var scale = seq['scale'];
+			if (scale != undefined && typeof(scale) == 'number') {
+				this.scaleX = scale;
+				this.scaleY = scale;
+			}
+
 			var ratioX = seq['ratioX'];
 			if (ratioX != undefined && typeof(ratioX) == 'number') {
 				this.x = game.width * ratioX - this.width / 2;
@@ -762,12 +785,6 @@ enchant.m3.Layer.prototype.setImage = function(seq) {
 			var baseY = seq['baseY'];
 			if (baseY != undefined && typeof(baseY) == 'number') {
 				this.y = game.baseY - baseY;
-			}
-
-			var scale = seq['scale'];
-			if (scale != undefined && typeof(scale) == 'number') {
-				this.scaleX = scale;
-				this.scaleY = scale;
 			}
 		}
 
@@ -1067,4 +1084,22 @@ function getFullURL(url, baseURL) {
 		}
 	}
 	return fullURL;
+}
+
+/**
+ * @returns オブジェクトのコピー
+ */
+function clone() {
+	var cloned = {};
+	for (var key in this) {
+		var type = typeof(this[key]);
+
+		if (type == 'boolean' || type == 'number' || type == 'string') {
+			cloned[key] = this[key];
+		}
+		else {
+			cloned[key] = clone.call(this[key]);
+		}
+	}
+	return cloned;
 }
