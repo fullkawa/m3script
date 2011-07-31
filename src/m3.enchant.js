@@ -151,7 +151,6 @@ enchant.m3.Character.prototype = {
 						this._defImg[key] = this.normalizeDefinition(def_images[key], defs);
 					}
 				}
-console.debug(this._defImg);
 			}
 		},
 
@@ -180,8 +179,11 @@ console.debug(this._defImg);
 				for (var i=0; i<this.SHOT_TYPES.length; i++) {
 					var shot_type = this.SHOT_TYPES[i];
 					// デフォルトの設定
-					defimg[shot_type] = clone.call(defs.shots[shot_type]);
-					defimg[shot_type].url = undefined;
+					if (defs != undefined && defs.shots[shot_type] != undefined) {
+console.debug(defs.shots[shot_type]); // FIXME: delete
+						defimg[shot_type] = clone.call(defs.shots[shot_type]);
+						defimg[shot_type].url = undefined;
+					}
 
 					if (shots != undefined && shots[shot_type] != undefined) {
 						defimg[shot_type] = shots[shot_type];
@@ -1090,15 +1092,19 @@ function getFullURL(url, baseURL) {
  * @returns オブジェクトのコピー
  */
 function clone() {
-	var cloned = {};
-	for (var key in this) {
-		var type = typeof(this[key]);
+	var cloned;
+console.debug(this);
+	if (this != undefined) {
+		cloned = {};
+		for (var key in this) {
+			var type = typeof(this[key]);
 
-		if (type == 'boolean' || type == 'number' || type == 'string') {
-			cloned[key] = this[key];
-		}
-		else {
-			cloned[key] = clone.call(this[key]);
+			if (type == 'boolean' || type == 'number' || type == 'string') {
+				cloned[key] = this[key];
+			}
+			else {
+				cloned[key] = clone.call(this[key]);
+			}
 		}
 	}
 	return cloned;
