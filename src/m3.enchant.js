@@ -130,7 +130,7 @@ enchant.m3.Character.prototype = {
 		/**
 		 * 指定がないときのショット
 		 */
-		defaultShotType: 'cu',//'ws',
+		defaultShotType: 'ws',
 
 		/**
 		 * キャラ定義を追加/上書きします
