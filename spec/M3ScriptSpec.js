@@ -4,149 +4,142 @@ try {
 catch(e) {
 	alert(e);
 }
-describe('M3Script', function() {
+describe('m3script', function() {
 
-//	describe('ImageDic', function() {
+	describe('Scenario', function() {
+
+		var s = new Scenario();
+
+		it ('consists of sequence', function() {
+			expect(s.sequence).toBeDefined();
+		});
+
+		it ('has images in scenario', function() {
+			expect(s.images).toBeDefined();
+		});
+
+		it ('has "baseURL" for images', function() {
+			expect(s.baseURL).toBeDefined();
+		});
+
+		describe('baseURL', function() {
+
+			it ('is used for URL complement', function() {
+				s.baseURL = 'http://m3itfc.appspot.com/';
+				s.images = {
+					'bg01': 'Bg_512.jpg'
+				};
+				expect(s.img('bg01').url).toEqual('http://m3itfc.appspot.com/Bg_512.jpg');
+			});
+		});
+
+		it ('has 999 sequences by default', function() {
+			expect(s.MAX_SEQUENCE_NO).toEqual(999);
+		});
+
+		it ('can play on player', function() {
+			expect(s.start).toBeDefined();
+		});
+	});
+
+	describe('Character', function() {
+
+		var anna = new Character('anna', {
+			baseURL: 'http://m3itfc.appspot.com/figure/anna/',
+			images: {
+			    '基本': {
+			    	img: 'anna_0000.png',  // 標準, デフォルト
+			    	shots: {
+				    	ws: { baseY: 460, scale: 0.9 }
+			    	}
+			    }
+			}
+		});
+
+//		it ('stand on LEFT_EDGE / LEFT / LEFT2 / CENTER / RIGHT2 / RIGHT / RIGHT_EDGE', function() {
+//			expect(anna.POSITIONS.length).toEqual(7);
 //
-//		it ('can store image URL.', function() {
-//			var imgdic = new ImageDic();
-//
-//			// No Base URL
-//			imgdic.set('key1', 'img1.png');
-//
-//			// Normal
-//			var baseURL = 'http://www.sample.com/img/';
-//			imgdic.set('key2', 'img2.png', baseURL);
-//
-//			// No slash at last
-//			var baseURL_noSlash = 'http://www.sample.com/img';
-//			imgdic.set('key3', 'img3.png', baseURL_noSlash);
-//
-//			expect(imgdic.urls['key1']).toEqual('img1.png');
-//			expect(imgdic.urls['key2']).toEqual('http://www.sample.com/img/img2.png');
-//			expect(imgdic.urls['key3']).toEqual('http://www.sample.com/img/img3.png');
+//			expect(anna.onLeft).toBeDefined();
+//			expect(anna.onLeft2).toBeDefined();
+//			expect(anna.onCenter).toBeDefined();
+//			expect(anna.onRight2).toBeDefined();
+//			expect(anna.onRight).toBeDefined();
+//		});
+
+//		it ('can have 5 shots', function() {
+//			expect(anna.SHOT_TYPES.length).toEqual(5);
 //		});
 //
-//		it ('produce image urls for Game.preload.', function() {
-//			var imgdic = new ImageDic();
-//			imgdic.urls = {
-//				key1: 'url1',
-//				key2: 'url2',
-//				key3: 'url3'
+//		it ('is displayed over waist by default', function() {
+//			expect(anna.defaultShotType).toEqual('ws');
+//		});
+
+//		it ('can add definitions', function() {
+//			var def_0000plus = {
+//				images: {
+//				    '基本': {
+//				    	shots: {
+//				    		cu: { baseY: 350, scale: 1.4 },
+//				    		bs: { baseY: 390, scale: 1.2 },
+//				    		ks: { baseY: 640, scale: 0.8 },
+//				    		fs: { baseY: 870, scale: 0.7 }
+//				    	}
+//				    }
+//				}
 //			};
-//			var urls = imgdic.getURLArray();
-//			expect(urls.join(',')).toEqual('url1,url2,url3');
-//		});
-//	});
-//
-//	describe('Scenario', function() {
-//
-//		var s = new Scenario();
-//
-//		it ('consists of images.', function() {
-//			// TODO:
-//		});
-//
-//		it ('consists of sequence', function() {
-//			// TODO:
-//		});
-//
-//		it ('has 999 sequences at most', function() {
-//			expect(s.MAX_SEQUENCE_NO).toEqual(999);
-//		});
-//
-//		it ('has four layers', function() {
-//			expect(s.LAYERS.length).toEqual(4);
-//		});
-//
-//		it ('has "bg" layer, it is for background', function() {
-//			expect(s.LAYERS[0]).toEqual('bg');
-//		});
-//
-//		it ('has "l1","l2","l3" layer, it is for character', function() {
-//			expect(s.LAYERS[1]).toEqual('l1');
-//			expect(s.LAYERS[2]).toEqual('l2');
-//			expect(s.LAYERS[3]).toEqual('l3');
-//		});
-//
-//		it ('shows character on waist shot by default', function() {
-//			expect(s.defaultShotType).toEqual('WS');
-//		});
-//
-//		it ('can play on new game.', function() {
-//			expect(s.start).toBeDefined();
-//		});
-//
-//		it ('can play on existing game.', function() {
-//			expect(s.play).toBeDefined();
-//		});
-//
-//		it ('can play step by step', function() {
-//			window.s = s;
-//			var game = new Game();
-//			window.s._game = window.s.initialize(game);
-//			window.s.sequence = {
-//				1: {},
-//				2: {}
+//			var def_0001 = {
+//				baseURL: 'http://m3itfc.appspot.com/figure/anna/',
+//				images: {
+//				    'にっこり': {
+//				    	img: 'anna_0001.png', // にっこり, ふふーん？
+//				    	shots: {
+//				    		cu: { baseY: 350, scale: 1.4 },
+//				    		bs: { baseY: 390, scale: 1.2 },
+//					    	ws: { baseY: 460, scale: 0.9 },
+//				    		ks: { baseY: 640, scale: 0.8 },
+//				    		fs: { baseY: 870, scale: 0.7 }
+//				    	}
+//				    }
+//				}
 //			};
-//			expect(window.s._game.seqNo).toEqual(0);
-//
-//			playNext();
-//			expect(window.s._game.seqNo).toEqual(1);
 //		});
-//	});
-//
-//	describe('Character', function() {
-//
-//		var c = new Character('piyo', {
-//			baseURL: 'http://www.hoge.com/',
-//			'smile': 'smile.png'
-//		});
-//
-//		it ('can get clone object.', function() {
-//			var cln = c.clone();
-//			expect(c === cln).not.toBeTruthy();
-//		});
-//
-//		it ('can get properties.', function() {
-//			expect(c.getProps).toBeDefined();
-//		});
-//	});
-//
-//	describe('Picture', function() {
-//
-//		// TODO:
-//	});
-//
-//	describe('Figure', function() {
-//
-//		// TODO:
-//	});
-//
-//	describe('RoundLabel', function() {
-//		it ('is subclass of Label', function() {
-//			var rlbl = new RoundLabel('hoge');
-//			expect(rlbl instanceof Label).toBeTruthy();
-//		});
-//	});
-//
-//	describe('Message', function() {
-//		it ('Its default position and size -> x:4, y:0, width:276', function() {
-//			var game = new Game();
-//			var default_msg = new Message();
-//			expect(default_msg.x).toEqual(4);
-//			expect(default_msg.y).toEqual(0);
-//			expect(default_msg.width).toEqual(276);
-//		});
-//	});
-//
-//	describe('Selection', function() {
-//		// TODO:
-//	});
-//
-//	describe('SelOption', function() {
-//		// TODO:
-//	});
+	});
+
+	describe('Player', function() {
+		// TODO:
+	});
+
+	describe('Layers', function() {
+		// TODO:
+	});
+
+	describe('Layer', function() {
+		// TODO:
+	});
+
+	describe('RoundLabel', function() {
+		// TODO:
+	});
+
+	describe('Message', function() {
+		// TODO:
+	});
+
+	describe('HistoryBtn', function() {
+		// TODO:
+	});
+
+	describe('HistoryMsg', function() {
+		// TODO:
+	});
+
+	describe('Selection', function() {
+		// TODO:
+	});
+
+	describe('SelOption', function() {
+		// TODO:
+	});
 
 	describe('Utility Functions', function() {
 
@@ -166,26 +159,6 @@ describe('M3Script', function() {
 
 			var url3 = 'http://www.piyo.com/pic.png';
 			expect(getFullURL(url3, baseURL1)).toEqual('http://www.piyo.com/pic.png');
-		});
-
-		it ('can getLength from any object', function() {
-			var obj1 = { itm1: '', itm2: ''};
-			obj1.length = getLength;
-			expect(obj1.length()).toEqual(2);
-		});
-
-		it ('is test', function() {
-			var game = new Game();
-
-			var lbl = new RoundLabel('&');
-			lbl.x = 100;
-			console.debug(lbl);
-
-			var scene = new Scene();
-			scene.addChild(lbl);
-			console.debug(lbl);
-
-			game.pushScene(scene);
 		});
 	});
 });
