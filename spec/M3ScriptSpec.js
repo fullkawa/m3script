@@ -8,7 +8,11 @@ describe('m3script', function() {
 
 	describe('Scenario', function() {
 
-		var s = new Scenario();
+		var s;
+
+		it ('is independent from Game object', function() {
+			s = new Scenario();
+		});
 
 		it ('consists of sequence', function() {
 			expect(s.sequence).toBeDefined();
@@ -44,65 +48,67 @@ describe('m3script', function() {
 
 	describe('Character', function() {
 
-		var anna = new Character('anna', {
-			baseURL: 'http://m3itfc.appspot.com/figure/anna/',
-			images: {
-			    '基本': {
-			    	img: 'anna_0000.png',  // 標準, デフォルト
-			    	shots: {
-				    	ws: { baseY: 460, scale: 0.9 }
-			    	}
-			    }
-			}
+		var anna;
+
+		it ('is independent from Game object', function() {
+			anna = new Character('anna', {
+				baseURL: 'http://m3itfc.appspot.com/figure/anna/',
+				images: {
+				    '基本': {
+				    	img: 'anna_0000.png',  // 標準, デフォルト
+				    	shots: {
+					    	ws: { baseY: 460, scale: 0.9 }
+				    	}
+				    }
+				}
+			});
 		});
 
-//		it ('stand on LEFT_EDGE / LEFT / LEFT2 / CENTER / RIGHT2 / RIGHT / RIGHT_EDGE', function() {
-//			expect(anna.POSITIONS.length).toEqual(7);
-//
-//			expect(anna.onLeft).toBeDefined();
-//			expect(anna.onLeft2).toBeDefined();
-//			expect(anna.onCenter).toBeDefined();
-//			expect(anna.onRight2).toBeDefined();
-//			expect(anna.onRight).toBeDefined();
-//		});
+		it ('stand on LEFT_EDGE / LEFT / LEFT2 / CENTER / RIGHT2 / RIGHT / RIGHT_EDGE', function() {
+			expect(anna.POSITIONS.length).toEqual(7);
 
-//		it ('can have 5 shots', function() {
-//			expect(anna.SHOT_TYPES.length).toEqual(5);
-//		});
-//
-//		it ('is displayed over waist by default', function() {
-//			expect(anna.defaultShotType).toEqual('ws');
-//		});
+			expect(anna.onLeft).toBeDefined();
+			expect(anna.onLeft2).toBeDefined();
+			expect(anna.onCenter).toBeDefined();
+			expect(anna.onRight2).toBeDefined();
+			expect(anna.onRight).toBeDefined();
+		});
 
-//		it ('can add definitions', function() {
-//			var def_0000plus = {
-//				images: {
-//				    '基本': {
-//				    	shots: {
-//				    		cu: { baseY: 350, scale: 1.4 },
-//				    		bs: { baseY: 390, scale: 1.2 },
-//				    		ks: { baseY: 640, scale: 0.8 },
-//				    		fs: { baseY: 870, scale: 0.7 }
-//				    	}
-//				    }
-//				}
-//			};
-//			var def_0001 = {
-//				baseURL: 'http://m3itfc.appspot.com/figure/anna/',
-//				images: {
-//				    'にっこり': {
-//				    	img: 'anna_0001.png', // にっこり, ふふーん？
-//				    	shots: {
-//				    		cu: { baseY: 350, scale: 1.4 },
-//				    		bs: { baseY: 390, scale: 1.2 },
-//					    	ws: { baseY: 460, scale: 0.9 },
-//				    		ks: { baseY: 640, scale: 0.8 },
-//				    		fs: { baseY: 870, scale: 0.7 }
-//				    	}
-//				    }
-//				}
-//			};
-//		});
+		it ('can have 5 shots', function() {
+			expect(anna.SHOT_TYPES.length).toEqual(5);
+		});
+
+		it ('is displayed over waist by default', function() {
+			expect(anna.defaultShotType).toEqual('ws');
+		});
+
+		it ('can add definitions', function() {
+			var def_0000plus = {
+				images: {
+				    '基本': {
+				    	shots: {
+				    		cu: { baseY: 350, scale: 1.4 },
+				    		bs: { baseY: 390, scale: 1.2 },
+				    		ks: { baseY: 640, scale: 0.8 },
+				    		fs: { baseY: 870, scale: 0.7 }
+				    	}
+				    }
+				}
+			};
+			anna.addDefinition(def_0000plus);
+console.debug(anna._defImg['基本']);
+			expect(anna._defImg['基本']['ws']).toBeDefined(); // 元の設定が残っていること
+			expect(anna._defImg['基本']['cu']).toBeDefined(); // 新しい設定が追加されていること
+
+			var def_0001 = {
+				baseURL: 'http://m3itfc.appspot.com/figure/anna/',
+				images: {
+				    'にっこり': {
+				    	img: 'anna_0001.png' // にっこり, ふふーん？
+				    }
+				}
+			};
+		});
 	});
 
 	describe('Player', function() {

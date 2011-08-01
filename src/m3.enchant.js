@@ -180,7 +180,6 @@ enchant.m3.Character.prototype = {
 					var shot_type = this.SHOT_TYPES[i];
 					// デフォルトの設定
 					if (defs != undefined && defs.shots[shot_type] != undefined) {
-console.debug(defs.shots[shot_type]); // FIXME: delete
 						defimg[shot_type] = clone.call(defs.shots[shot_type]);
 						defimg[shot_type].url = undefined;
 					}
@@ -188,7 +187,7 @@ console.debug(defs.shots[shot_type]); // FIXME: delete
 					if (shots != undefined && shots[shot_type] != undefined) {
 						defimg[shot_type] = shots[shot_type];
 					}
-					if (defimg[shot_type].url == undefined) {
+					if (defimg[shot_type] != undefined && defimg[shot_type].url == undefined) {
 						defimg[shot_type].url = getFullURL(definition.img, defs.baseURL);
 					}
 				}
@@ -1093,7 +1092,6 @@ function getFullURL(url, baseURL) {
  */
 function clone() {
 	var cloned;
-console.debug(this);
 	if (this != undefined) {
 		cloned = {};
 		for (var key in this) {
