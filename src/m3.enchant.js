@@ -447,6 +447,14 @@ enchant.m3.Player = function(game, scenario) {
 
 	this.loadScenario(scenario);
 
+	/**
+	 * 全シーケンス再生終了後に表示するメッセージ
+	 */
+	this.endMessage = 'END';
+	if (scenario.endMessage != undefined) {
+		this.endMessage = scenario.endMessage;
+	}
+
 	var game = enchant.Game.instance;
 	game._player = this;
 };
@@ -638,7 +646,7 @@ enchant.m3.Player.prototype = {
 				console.warn('player instance is undefined.');
 			}
 		} else {
-			console.info('game end');
+			alert(self.endMessage);
 		}
 	},
 

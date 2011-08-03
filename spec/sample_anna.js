@@ -79,4 +79,6 @@ s.sequence = [
 	}
 ];
 
+s.endMessage = 'おわり';
+
 s.start();
