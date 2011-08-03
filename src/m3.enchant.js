@@ -148,7 +148,7 @@ enchant.m3.Character.prototype = {
 						if (defs.shots == undefined) {
 							defs.shots = def_images[key].shots;
 						}
-						this._defImg[key] = this.normalizeDefinition(def_images[key], defs);
+						this._defImg[key] = overwrite(this.normalizeDefinition(def_images[key], defs), this._defImg[key]);
 					}
 				}
 			}
@@ -180,7 +180,7 @@ enchant.m3.Character.prototype = {
 					var shot_type = this.SHOT_TYPES[i];
 					// デフォルトの設定
 					if (defs != undefined && defs.shots[shot_type] != undefined) {
-						defimg[shot_type] = clone.call(defs.shots[shot_type]);
+						defimg[shot_type] = clone(defs.shots[shot_type]);
 						defimg[shot_type].url = undefined;
 					}
 
@@ -1090,20 +1090,34 @@ function getFullURL(url, baseURL) {
 /**
  * @returns オブジェクトのコピー
  */
-function clone() {
+function clone(src) {
+	if (src == undefined) {
+		src = this;
+	}
 	var cloned;
-	if (this != undefined) {
-		cloned = {};
-		for (var key in this) {
-			var type = typeof(this[key]);
+	if (src != undefined) {
+		cloned = overwrite(src, {});
+	}
+	return cloned;
+}
 
-			if (type == 'boolean' || type == 'number' || type == 'string') {
-				cloned[key] = this[key];
+/**
+ * オブジェクトの内容を上書きする
+ * @param {Object} src 上書きするオブジェクト
+ * @param {Object} target 上書きされるオブジェクト
+ */
+function overwrite(src, target) {
+	if (src != undefined) {
+		if (target == undefined) target = {};
+		for (var key in src) {
+			var type = typeof(src[key]);
+			if (type == 'object') {
+				target[key] = overwrite(src[key], target[key]);
 			}
 			else {
-				cloned[key] = clone.call(this[key]);
+				target[key] = src[key];
 			}
 		}
 	}
-	return cloned;
+	return target;
 }

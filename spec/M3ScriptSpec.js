@@ -83,6 +83,7 @@ describe('m3script', function() {
 		});
 
 		it ('can add definitions', function() {
+console.debug(anna._defImg);
 			var def_0000plus = {
 				images: {
 				    '基本': {
@@ -96,7 +97,7 @@ describe('m3script', function() {
 				}
 			};
 			anna.addDefinition(def_0000plus);
-console.debug(anna._defImg['基本']);
+console.debug(anna._defImg);
 			expect(anna._defImg['基本']['ws']).toBeDefined(); // 元の設定が残っていること
 			expect(anna._defImg['基本']['cu']).toBeDefined(); // 新しい設定が追加されていること
 
@@ -165,6 +166,22 @@ console.debug(anna._defImg['基本']);
 
 			var url3 = 'http://www.piyo.com/pic.png';
 			expect(getFullURL(url3, baseURL1)).toEqual('http://www.piyo.com/pic.png');
+		});
+
+		it ('can clone', function() {
+			var obj1 = {
+				num: 1,
+				str: 'a',
+				ary: [1,2,3],
+				obj: {
+					hoge: 'piyo'
+				}
+			};
+			var obj2 = clone(obj1);
+			expect(obj2.num).toEqual(1);
+			expect(obj2.str).toEqual('a');
+			expect(obj2.ary[2]).toEqual(3);
+			expect(obj2.obj.hoge).toEqual('piyo');
 		});
 	});
 });
