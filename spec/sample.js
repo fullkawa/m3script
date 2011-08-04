@@ -13,17 +13,14 @@ var s = new Scenario();
 
 var miku = new Character('miku', {
 	baseURL: 'http://m3itfc.appspot.com/figure/miku/',
+	shots: {
+		ks: { baseY: 268, scale: 0.9 },
+		ws: { baseY: 180, scale: 1   },
+		bs: { baseY: 130, scale: 1.6 },
+		cu: { baseY: 100, scale: 2   }
+	},
 	images: {
-		'default': {
-			img: 'miku_00.png',
-			shots: {
-				fs: { baseY: 400, scale: 1},
-				ks: { baseY: 306, scale: 1},
-				ws: { baseY: 180, scale: 1},
-				bs: { baseY: 125, scale: 1},
-				cu: { baseY: 100, scale: 1}
-			}
-		},
+		'default': 'miku_00.png',
 		'half_smile': 'miku_01.png',
 		'smile': 'miku_02.png',
 		'slight_bow': 'miku_03.png',
@@ -50,20 +47,18 @@ s.sequence = {
 		msg: 'This is a Sample Novel.<br/><br/>'
 			+ '< HIT SPACE/ENTER KEY >'
 	},
-	/*
 	2: {
 		select: {
 			msg: 'This is selection.<br>What do you do ?',
 			options: {
-			    1: { label: 'Start', linkTo: 'sample.html?scene1' },
+			    1: { label: 'Start', exec: function() { this.params['started'] = true; } },
 			    2: { label: 'Exit', linkTo: 'http://www.google.com/' },
-			    3: { label: 'option 3', linkTo: '.'},
-			    4: { label: 'option 4', linkTo: '.'},
-			    5: { label: 'option 5', linkTo: '.'}
+			    3: { label: 'option 3'},
+			    4: { label: 'option 4'},
+			    5: { label: 'option 5'}
 			}
 		}
 	},
-	*/
 	3: {
 		transition: 'fadein',
 		bg: s.img('bg01'),

@@ -139,7 +139,10 @@ enchant.m3.Character.prototype = {
 			if (definition != undefined) {
 				var def_images = definition.images;
 				if (def_images != undefined) {
-					var defs = { baseURL: definition.baseURL };
+					var defs = {
+						baseURL: definition.baseURL,
+						shots: definition.shots
+					};
 
 					for (key in def_images) {
 						// デフォルトのポーズ名設定
@@ -171,7 +174,15 @@ enchant.m3.Character.prototype = {
 			var defimg = {};
 			if (typeof(definition) == 'string') {
 				// 簡易的な定義
-				defimg[this.defaultShotType] = { url: getFullURL(definition, defs.baseURL) };
+				for (var i=0; i<this.SHOT_TYPES.length; i++) {
+					var shot_type = this.SHOT_TYPES[i];
+					if (defs.shots == undefined || defs.shots[shot_type] == undefined) {
+						defimg[shot_type] = {};
+					} else {
+						defimg[shot_type] = defs.shots[shot_type];
+					}
+					defimg[shot_type].url = getFullURL(definition, defs.baseURL);
+				}
 			}
 			else {
 				// 詳細な定義
@@ -185,7 +196,7 @@ enchant.m3.Character.prototype = {
 					}
 
 					if (shots != undefined && shots[shot_type] != undefined) {
-						defimg[shot_type] = shots[shot_type];
+						defimg[shot_type] = overwrite(shots[shot_type], defimg[shot_type]);
 					}
 					if (defimg[shot_type] != undefined && defimg[shot_type].url == undefined) {
 						defimg[shot_type].url = getFullURL(definition.img, defs.baseURL);
@@ -203,12 +214,12 @@ enchant.m3.Character.prototype = {
 		 *   url: 画像URL(＝Game.assetsのキー)
 		 *        key of Game.assets
 		 *
+		 *   scale: 表示倍率。ショットによって異なる
+		 *
 		 *   ratioX: キャラクターのX(横)軸方向の表示位置　※画面幅に対する比率
 		 *         position of character
 		 *
 		 *   baseY: キャラクタ表示時、下限のY座標。ショットによって異なる
-		 *
-		 *   scale: 表示倍率。ショットによって異なる
 		 *
 		 *   offsetX, offsetY: 表示位置のオフセット
 		 *                     position offset
@@ -216,19 +227,21 @@ enchant.m3.Character.prototype = {
 		getProps: function() {
 			var def = this._defImg[this.key][this.shot_type];
 
+			var url = '';
 			var scale = 1;
 			var baseY = 0;
 			// ↑FIXME: 簡易定義のときは画像の下端(height)にしたいのだが…
 			if (def != undefined) {
+				if (def.url != undefined) url = def.url;
 				if (def.scale != undefined) scale = def.scale;
 				if (def.baseY != undefined) baseY = def.baseY;
 			}
 			var props = {
 				key: this.key,
-				url: def.url,
+				url: url,
+				scale: scale,
 				ratioX: this.posX / (this.POSITIONS.length - 1),
 				baseY: baseY,
-				scale: scale,
 				offsetX: this.offsetX,
 				offsetY: this.offsetY
 			};
@@ -419,7 +432,7 @@ enchant.m3.Player = function(game, scenario) {
 	 * メッセージウィンドウ
 	 */
 	this.msg = new Message();
-	this.msg.addEventListener(enchant.Event.TOUCH_START, this.playNext);
+	this.msg.addEventListener(enchant.Event.TOUCH_START, this.play);
 
 	/**
 	 * 正規化されたシーケンスデータ
@@ -466,18 +479,27 @@ enchant.m3.Player.prototype = {
 	 */
 	LAYERS: ['bg', 'l1', 'l2', 'l3'],
 
+	MESSAGE: 'msg',
+
+	AUDIO: 'audio',
+
+	COMMANDS: { select: 'select' },
+
 	/**
 	 * キー → ボタンへの割り当て
 	 */
 	setKeybind: function() {
 		var game = enchant.Game.instance;
 
+		/* FIXME: 選択肢表示中にスキップされると困るので、少なくとも対処方法が見つかるまではOFFにしておく
 		game.keybind(13, 'a'); // enter key
 		game.keybind(32, 'a'); // space key
-		game.addEventListener(enchant.Event.A_BUTTON_DOWN, this.playNext);
+		game.addEventListener(enchant.Event.A_BUTTON_DOWN, this.play);
+		*/
 
+		/*
 		game.keybind(66, 'b'); // 'b' key
-		// game.addEventListener(enchant.Event.B_BUTTON_DOWN, this.playBack);
+		*/
 	},
 
 	/**
@@ -510,7 +532,7 @@ enchant.m3.Player.prototype = {
 	 * @param cut 一カット分のシナリオデータ
 	 */
 	getSequence: function(cut) {
-		var seq = {};
+		var sequence = {};
 
 		for (var i=0; i<this.LAYERS.length; i++) {
 			var key = this.LAYERS[i];
@@ -518,17 +540,25 @@ enchant.m3.Player.prototype = {
 			if (layer != undefined) {
 				if (layer instanceof Character) {
 					// 立ち絵の場合
-					seq[key] = layer.getProps();
+					sequence[key] = layer.getProps();
 				}
 				else {
 					// 背景(一枚絵)の場合
-					seq[key] = layer;
+					sequence[key] = layer;
 				}
-				this.stockImages(seq[key]);
+				this.stockImages(sequence[key]);
 			}
 		}
 
-		return seq;
+		// コマンドはそのままシーケンスへ
+		for (var key in this.COMMANDS) {
+			var cmd = this.COMMANDS[key];
+			if (cut[cmd] != undefined) {
+				sequence[cmd] = cut[cmd];
+			}
+		}
+
+		return sequence;
 	},
 
 	/**
@@ -542,51 +572,42 @@ enchant.m3.Player.prototype = {
 	},
 
 	/**
-	 * 使用画像URLを配列で全て取得する
-	 * @return {Array}
-	 */
-	getImageURLArray: function() {
-		var arr = [];
-		for (var key in this.imgs) {
-			var url = this.imgs[key];
-			if (url != undefined && typeof(url) == 'string') arr.push(url);
-		}
-		return arr;
-	},
-
-	/**
 	 * メッセージデータを取得する
 	 *
 	 * @param cut 一カット分のシナリオデータ
 	 */
-	getMessage: function(cut, layers) {
-		var msg = {};
-		var layers = this.LAYERS.concat(['msg']);
+	getMessage: function(cut) {
+		var message = {};
+		var keys = this.LAYERS.concat([this.MESSAGE, this.COMMANDS['select']]);
 
-		for (var i=0; i<layers.length; i++) {
-			var key = layers[i];
-			var layer = cut[key];
-			if (layer != undefined) {
-				if (typeof(layer) == 'string' && layer.length > 0) {
-					msg = { msg: layer };
+		for (var i=0; i<keys.length; i++) {
+			var key = keys[i];
+			var obj = cut[key];
+			if (obj != undefined) {
+				if (typeof(obj) == 'string' && obj.length > 0) {
+					message = { msg: obj };
 				}
-				else if (layer instanceof Character) {
-					var chara = layer.getWords();
+				else if (obj instanceof Character) {
+					var chara = obj.getWords();
 					if (chara.msg != undefined && chara.msg.length > 0) {
-						msg = {
+						message = {
 							name: chara.name,
 							msg: chara.msg
 						};
 					}
 				}
+				else if (obj.msg != undefined && typeof(obj.msg) == 'string' && obj.msg.length > 0) {
+					message = { msg: obj.msg };
+				}
 			}
 		}
 
-		return msg;
+		return message;
 	},
 
 	/**
 	 * ゲーム画面を構成する
+	 * ※静的な画面要素のみ <-> play
 	 *
 	 * @return {enchant.Scene} ゲーム画面
 	 */
@@ -629,37 +650,102 @@ enchant.m3.Player.prototype = {
 		history_btn.x = width - history_btn._element.clientWidth;
 		history_btn.y = baseY - history_btn._element.clientHeight + this.msg.padding;
 
+		game.basicScenes = game._scenes.length;
 		return screen;
 	},
 
 	/**
-	 * 次のシーケンスへ進む
+	 * 選択肢の表示位置を決める
+	 * @param select {enchant.Group}
 	 */
-	playNext: function() {
+	buildSelection: function(select) {
+		var baseX = 30;
+		var baseY = 60;
+		var step = 38;
+		for (var i=0; i<select.childNodes.length; i++) {
+			var opt = select.childNodes[i];
+			opt.x = baseX;
+			opt.y = baseY + step * i;
+		}
+	},
+
+	/**
+	 * シーケンスを再生する
+	 * ＝動的な画面要素を更新する <-> build
+	 */
+	play: function() {
 		var game = enchant.Game.instance;
 		var self = game._player;
-		if (self.seqNo < self.seqs.length) {
-			if (self != undefined) {
-				self.layers.setSequence(self.seqs[self.seqNo], self.seqs[self.seqNo + 1]);
-				self.msg.setSequence(self.msgqs[self.seqNo]);
-				self.seqNo++;
+		self.clearPops();
+		var pop = null;
+
+		if (self != undefined && self.seqNo < self.seqs.length) {
+			var seq = self.seqs[self.seqNo];
+			var next_seq = self.seqs[self.seqNo + 1];
+			self.layers.setSequence(seq, next_seq);
+
+			var select = seq[self.COMMANDS['select']];
+			if (select != undefined) {
+				var self_select = new Selection(game);
+				self_select.setSequence(select);
+				self.buildSelection(self_select);
+				pop = self_select;
 			}
-			else {
-				console.warn('player instance is undefined.');
-			}
+
+			self.msg.setSequence(self.msgqs[self.seqNo], pop);
+
+			self.seqNo++;
+
 		} else {
 			alert(self.endMessage);
 		}
 	},
 
+	/**
+	 * ポップアップ(追加されたSceneオブジェクト：選択肢など)を追加する
+	 */
+	addPop: function(pop) {
+		var game = enchant.Game.instance;
+		var scene = new Scene();
+		scene.addChild(pop);
+		game.pushScene(scene);
+	},
+
+	/**
+	 * ポップアップをクリアする
+	 */
+	clearPops: function() {
+		var game = enchant.Game.instance;
+		for (var i=0; i < (game._scenes.length - game.basicScenes); i++) {
+			game.popScene();
+		}
+	},
+
+	/**
+	 * ゲームをスタートさせる
+	 */
 	start: function() {
 		var game = enchant.Game.instance;
 		game.preload(this.getImageURLArray());
 
 		game.onload = function() {
-			game._player.playNext();
+			game.params = {};
+			game._player.play();
 		};
 		game.start();
+	},
+
+	/**
+	 * 使用画像URLを配列で全て取得する
+	 * @return {Array}
+	 */
+	getImageURLArray: function() {
+		var arr = [];
+		for (var key in this.imgs) {
+			var url = this.imgs[key];
+			if (url != undefined && typeof(url) == 'string') arr.push(url);
+		}
+		return arr;
 	}
 };
 
@@ -951,8 +1037,19 @@ enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
 		 */
 		this.weight = 1;
 
+		/**
+		 * メッセージ表示後にポップアップ表示されるノード
+		 */
+		this.pop = null;
+
 		this.addEventListener(enchant.Event.ENTER_FRAME, function() {
 			this.text = this.prefix + this.textBuf.substring(0, this.cnt * this.weight);
+			if (this.cnt > this.textBuf.length && this.pop != null) {
+				var game = enchant.Game.instance;
+				var scene = new Scene();
+				scene.addChild(this.pop);
+				game.pushScene(scene);
+			}
 			this.cnt++;
 		});
 	}
@@ -961,9 +1058,10 @@ enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
 /**
  * シーケンスをセットする
  */
-enchant.m3.Message.prototype.setSequence = function(seq) {
+enchant.m3.Message.prototype.setSequence = function(seq, pop) {
 	if (seq != undefined) {
 		this.setMessage(seq.msg, seq.name);
+		this.pop = pop;
 	}
 	else {
 		console.warn('seq is undefined.');
@@ -1030,15 +1128,27 @@ enchant.m3.HistoryMsg.prototype.DUMMY = function() {
 /**
  * 選択ウィンドウ
  */
-enchant.m3.Selection = enchant.Class.create(enchant.m3.RoundLabel, {
+enchant.m3.Selection = enchant.Class.create(enchant.Group, {
 
-	initialize: function(text) {
-		RoundLabel.call(this, text);
-		this._element.className = 'm3_selection';
+	initialize: function() {
+		Group.call(this);
 	}
 });
 
-enchant.m3.Selection.prototype.DUMMY = function() {
+enchant.m3.Selection.prototype.setSequence = function(seq) {
+	/* msg はメッセージウィンドウに表示される
+	if (seq.msg != undefined) {
+		var msg = new RoundLabel(seq.msg);
+		msg._element.className += ' m3_selection';
+		this.addChild(msg);
+	}
+	*/
+	if (seq.options != undefined) {
+		for (var key in seq.options) {
+			var opt = new SelOption(seq.options[key]);
+			this.addChild(opt);
+		}
+	}
 };
 
 /**
@@ -1046,20 +1156,43 @@ enchant.m3.Selection.prototype.DUMMY = function() {
  */
 enchant.m3.SelOption = enchant.Class.create(enchant.m3.RoundLabel, {
 
-	initialize: function(label, linkTo, options) {
-		RoundLabel.call(this, label, options);
+	initialize: function(def) {
+		RoundLabel.call(this, def.label);
 		this._element.className = 'm3_seloption';
 
-		this.applyPadding(8, 32); // from m3script.css
+		var game = enchant.Game.instance;
 
-		// タッチしたら「リンク先へ移動」
-		this.addEventListener(enchant.Event.TOUCH_START, function() {
-			if (linkTo != undefined) location.href = linkTo;
-		});
+		if (def.linkTo != undefined) {
+			// タッチしたら「リンク先へ移動」
+			this.addEventListener(enchant.Event.TOUCH_START, function() {
+				location.href = def.linkTo;
+			});
+		}
+		else if (def.exec != undefined) {
+			// タッチで関数実行した後、次へ進む
+			this.addEventListener(enchant.Event.TOUCH_START, function() {
+				def.exec.call(game);
+				game._player.play();
+			});
+		}
+		else {
+			// 何もせずに次へ進む
+			this.addEventListener(enchant.Event.TOUCH_START, function() {
+				game._player.play();
+			});
+		}
 	}
 });
 
 enchant.m3.SelOption.prototype.DUMMY = function() {
+};
+
+/**
+ * TODO: 入力ダイアログ
+ */
+enchant.m3.InputDialog = enchant.Class.create({});
+
+enchant.m3.InputDialog.prototype.DUMMY = function() {
 };
 
 /*
