@@ -602,7 +602,9 @@ enchant.m3.Player.prototype = {
 		screen.addChild(this.msg);
 
 		var history_btn = new HistoryBtn('履歴');
+		/* TODO: 実装してから
 		screen.addChild(history_btn);
+		*/
 
 		var game = enchant.Game.instance;
 		game.pushScene(screen);
@@ -769,6 +771,7 @@ enchant.m3.Layer.prototype.setImage = function(seq) {
 	if (seq != undefined) {
 		var game = enchant.Game.instance;
 
+console.debug(seq);
 		if (seq['url'] != undefined) {
 			this.image = game.assets[seq['url']];
 		}
