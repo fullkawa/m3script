@@ -1,5 +1,5 @@
 /**
- * Sample Scenario 2
+ * Test Novel Scenario
  * @author fullkawa
  */
 
@@ -7,9 +7,10 @@ try {
 	enchant('m3');
 }
 catch(e) {
-	alert('M3Script need "enchant.js" ! \n[' + e.toString() + ']');
+	alert('M3Script need "enchant.js" ! \n[' + e.toString() + "]");
 }
 var s = new Scenario();
+
 var miku = new Character('miku', {
 	baseURL: 'http://m3itfc.appspot.com/figure/miku/',
 	images: {
@@ -30,8 +31,9 @@ var miku = new Character('miku', {
 	}
 });
 
-s.baseURL = 'http://m3itfc.appspot.com/';
+s.baseURL = "http://m3itfc.appspot.com/";
 s.images = {
+	'title': 'img_test/title.jpg',
 	// 'bg_3D': 'img_test/HNI_0004.MPO',
 	'bg01': 'Bg_512.jpg',
 	'bg01a': {
@@ -44,6 +46,25 @@ s.images = {
 
 s.sequence = {
 	1: {
+		bg: s.img('title'),
+		msg: 'This is a Sample Novel.<br/><br/>'
+			+ '< HIT SPACE/ENTER KEY >'
+	},
+	/*
+	2: {
+		select: {
+			msg: 'This is selection.<br>What do you do ?',
+			options: {
+			    1: { label: 'Start', linkTo: 'sample.html?scene1' },
+			    2: { label: 'Exit', linkTo: 'http://www.google.com/' },
+			    3: { label: 'option 3', linkTo: '.'},
+			    4: { label: 'option 4', linkTo: '.'},
+			    5: { label: 'option 5', linkTo: '.'}
+			}
+		}
+	},
+	*/
+	3: {
 		transition: 'fadein',
 		bg: s.img('bg01'),
 		l1: miku.say('Hello, world !').as('[ miku ]'),
@@ -52,20 +73,19 @@ s.sequence = {
 			loop: true
 		}
 	},
-	2: {
+	4: {
 		l1: miku.onLeft().say('I will set a "diff" image to background, now !')
 	},
-	3: {
+	5: {
 		transition: 'fadeout',
 		bg: s.img('bg01a'),
 		l1: miku.wiz('smile'),
 		audio: 'audio/se01.mp3'
 	},
-	4: {
+	6: {
 		clear: 'all',
 		msg: '- THE END -'
 	}
 };
-s.eos = '&nbsp;&gt;&gt;&gt; click to next';
 
 s.start();

@@ -771,7 +771,6 @@ enchant.m3.Layer.prototype.setImage = function(seq) {
 	if (seq != undefined) {
 		var game = enchant.Game.instance;
 
-console.debug(seq);
 		if (seq['url'] != undefined) {
 			this.image = game.assets[seq['url']];
 		}

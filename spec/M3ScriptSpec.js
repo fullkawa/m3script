@@ -83,7 +83,6 @@ describe('m3script', function() {
 		});
 
 		it ('can add definitions', function() {
-console.debug(anna._defImg);
 			var def_0000plus = {
 				images: {
 				    '基本': {
@@ -97,7 +96,6 @@ console.debug(anna._defImg);
 				}
 			};
 			anna.addDefinition(def_0000plus);
-console.debug(anna._defImg);
 			expect(anna._defImg['基本']['ws']).toBeDefined(); // 元の設定が残っていること
 			expect(anna._defImg['基本']['cu']).toBeDefined(); // 新しい設定が追加されていること
 
