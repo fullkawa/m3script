@@ -12,6 +12,21 @@
   You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+ * 今後の方針とか
+ *
+ * TODO: ver.0.3を固める
+ *  - 残りのタスクを片付ける > https://twitter.com/#!/messages
+ *  - http://wise9.jp/archives/2822 をテスト、プレイヤー名をどう保存するか？
+ *  - 一通りのブラウザ / jsdo.it, 9leapでテストする
+ *
+ * TODO: あんな定義ファイルを固め、jsdo.itにビューワを用意する
+ *        背景画像は…素材があればいいけど、とりあえず無しで？
+ *
+ * TODO: あんな自己紹介と何本かのショートストーリーを投稿
+ *  - jsdo.it経由で9leapへ？
+ */
+
 enchant.m3 = {};
 
 /**
@@ -408,26 +423,6 @@ enchant.m3.Character.prototype = {
  * > Scenario data
  */
 enchant.m3.Scenario = function() {
-//	/**
-//	 * @type {String]
-//	 * URLの記述を短縮するために、共通部分を指定することが出来る。
-//	 */
-//	this.baseURL = '';
-//
-//	/**
-//	 * [ 使用する画像の定義 ]
-//	 * @type {Object}
-//	 *
-//	 * key:
-//	 *   シナリオ内で指定するときの名前
-//	 *   > key is name in scenario.
-//	 *
-//	 * value:
-//	 *   画像URL
-//	 *   > image URL
-//	 */
-//	this.images = {};
-
 	/**
 	 * [ シナリオ定義 ]
 	 */
@@ -438,27 +433,6 @@ enchant.m3.Scenario.prototype = {
 	 * シーケンス番号として使える最大値
 	 */
 	MAX_SEQUENCE_NO: 999,
-
-//	/**
-//	 * @return {Object} 画像(一枚絵・背景)表示プロパティ一式
-//	 *
-//	 * @param {String} key imagesのキー
-//	 */
-//	img: function(key) {
-//		var props = { fitScreen: true };
-//
-//		var value = this.images[key];
-//		if (value != undefined) {
-//			if (typeof(value) == 'string') {
-//				props.url = getFullURL(value, this.baseURL);
-//			}
-//			else {
-//				// TODO: 差分定義
-//			}
-//		}
-//
-//		return props;
-//	},
 
 	/**
 	 * 最初のシーケンスから再生する
@@ -552,9 +526,9 @@ enchant.m3.Player.prototype = {
 	 * キー → ボタンへの割り当て
 	 */
 	setKeybind: function() {
+		/* FIXME: 選択肢表示中にスキップされると困るので、少なくとも対処方法が見つかるまではOFFにしておく
 		var game = enchant.Game.instance;
 
-		/* FIXME: 選択肢表示中にスキップされると困るので、少なくとも対処方法が見つかるまではOFFにしておく
 		game.keybind(13, 'a'); // enter key
 		game.keybind(32, 'a'); // space key
 		game.addEventListener(enchant.Event.A_BUTTON_DOWN, this.play);
@@ -607,7 +581,6 @@ enchant.m3.Player.prototype = {
 				else {
 					sequence[key] = layer;
 				}
-console.debug(sequence[key]);
 				this.stockImages(sequence[key]);
 			}
 		}

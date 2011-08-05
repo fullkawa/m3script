@@ -1,5 +1,5 @@
 /**
- * Test Novel Scenario
+ * Sample Scenario
  * @author fullkawa
  */
 
