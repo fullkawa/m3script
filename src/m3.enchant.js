@@ -427,6 +427,16 @@ enchant.m3.Scenario = function() {
 	 * [ シナリオ定義 ]
 	 */
 	this.sequence = {};
+
+	/**
+	 * 文章表示後に表示するメッセージ
+	 */
+	this.eos = '<div class="m3_eos">[click!]</div>';
+
+	/**
+	 * 全シーケンス再生終了後に表示するメッセージ
+	 */
+	this.eog = 'END';
 };
 enchant.m3.Scenario.prototype = {
 	/**
@@ -469,7 +479,6 @@ enchant.m3.Player = function(game, scenario) {
 	 * メッセージウィンドウ
 	 */
 	this.msg = new Message();
-	this.msg.addEventListener(enchant.Event.TOUCH_START, this.play);
 
 	/**
 	 * 正規化されたシーケンスデータ
@@ -496,6 +505,10 @@ enchant.m3.Player = function(game, scenario) {
 	this.setKeybind();
 
 	this.loadScenario(scenario);
+
+	if (scenario.eos != undefined) {
+		this.msg.suffix = scenario.eos;
+	}
 
 	/**
 	 * 全シーケンス再生終了後に表示するメッセージ
@@ -711,40 +724,46 @@ enchant.m3.Player.prototype = {
 	play: function() {
 		var game = enchant.Game.instance;
 		var self = game._player;
-		self.clearPops();
-		var pop = null;
+		if (self != undefined) {
+			self.clearPops();
+			var pop = null;
 
-		if (self != undefined && self.seqNo < self.seqs.length) {
-			var seq = self.seqs[self.seqNo];
-			var next_seq = self.seqs[self.seqNo + 1];
-			self.layers.setSequence(seq, next_seq);
+			if (self.seqNo < self.seqs.length) {
+				var seq = self.seqs[self.seqNo];
 
-			var select = seq[self.COMMANDS['select']];
-			if (select != undefined) {
-				var self_select = new Selection(game);
-				self_select.setSequence(select);
-				self.buildSelection(self_select);
-				pop = self_select;
+				var select = seq[self.COMMANDS['select']];
+				if (select != undefined) {
+					var self_select = new Selection(game);
+					self_select.setSequence(select);
+					self.buildSelection(self_select);
+					pop = self_select;
+				}
+
+				var next_seq = self.seqs[self.seqNo + 1];
+				self.layers.setSequence(seq, next_seq);
+
+				self.msg.setSequence(self.msgqs[self.seqNo]);
+				self.msg.setPop(pop);
+
+				self.seqNo++;
+				if (self.seqNo == self.seqs.length) {
+					self.msg.setEnd(true);
+				}
+			} else {
+				alert(self.eog);
 			}
-
-			self.msg.setSequence(self.msgqs[self.seqNo], pop);
-
-			self.seqNo++;
-
-		} else {
-			alert(self.eog);
 		}
 	},
 
 	/**
 	 * ポップアップ(追加されたSceneオブジェクト：選択肢など)を追加する
 	 */
-	addPop: function(pop) {
-		var game = enchant.Game.instance;
-		var scene = new Scene();
-		scene.addChild(pop);
-		game.pushScene(scene);
-	},
+//	addPop: function(pop) {
+//		var game = enchant.Game.instance;
+//		var scene = new Scene();
+//		scene.addChild(pop);
+//		game.pushScene(scene);
+//	},
 
 	/**
 	 * ポップアップをクリアする
@@ -1062,6 +1081,12 @@ enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
 		this.prefix = '';
 
 		/**
+		 * テキストの最後に表示される固定文字列
+		 * 文字送りの指示/アイコンなど
+		 */
+		this.suffix = '';
+
+		/**
 		 * 文字送りのためのカウンタ
 		 */
 		this.cnt = 0;
@@ -1073,30 +1098,62 @@ enchant.m3.Message =  enchant.Class.create(enchant.m3.RoundLabel, {
 		this.weight = 1;
 
 		/**
+		 * 自動文字送りのスピード(単位：fps)
+		 * 0未満だと自動文字送りしない
+		 */
+		this.wait = 60;
+
+		/**
 		 * メッセージ表示後にポップアップ表示されるノード
 		 */
 		this.pop = null;
 
 		this.addEventListener(enchant.Event.ENTER_FRAME, function() {
 			this.text = this.prefix + this.textBuf.substring(0, this.cnt * this.weight);
-			if (this.cnt > this.textBuf.length && this.pop != null) {
-				var game = enchant.Game.instance;
-				var scene = new Scene();
-				scene.addChild(this.pop);
-				game.pushScene(scene);
+
+			if (this.cnt > this.textBuf.length) {
+				if (this.pop != null && this.pop != undefined) {
+					var game = enchant.Game.instance;
+					var scene = new Scene();
+					scene.addChild(this.pop);
+					game.pushScene(scene);
+				}
+				else {
+					this.text += this.suffix;
+					if (this.wait >= 0 && this.cnt > this.textBuf.length + this.wait) {
+						enchant.m3.Player.prototype.play();
+					}
+				}
 			}
 			this.cnt++;
+		});
+
+		/**
+		 * タッチ無効フラグ
+		 */
+		this.touch_disabled = false;
+
+		this.addEventListener(enchant.Event.TOUCH_START, function() {
+			if (!this.touch_disabled) enchant.m3.Player.prototype.play();
 		});
 	}
 });
 
+enchant.m3.Message.prototype.setPop = function(pop) {
+	if (pop == null) {
+		this.touch_disabled = false;
+	} else {
+		this.touch_disabled = true;
+	}
+	this.pop = pop;
+};
+
 /**
  * シーケンスをセットする
  */
-enchant.m3.Message.prototype.setSequence = function(seq, pop) {
+enchant.m3.Message.prototype.setSequence = function(seq) {
 	if (seq != undefined) {
 		this.setMessage(seq.msg, seq.name);
-		this.pop = pop;
 	}
 	else {
 		console.warn('seq is undefined.');
@@ -1115,10 +1172,22 @@ enchant.m3.Message.prototype.setMessage = function(text, name) {
 	this.cnt = 0;
 
 	if (name != undefined) {
-		this.prefix = '<span class="m3_msg_name">' + name + '</span><br/>';
+		this.prefix = '<div class="m3_msg_name">' + name + '</div>';
 	}
 	if (text != undefined) {
-		this.textBuf = text + '<br/>';
+		this.textBuf = text;
+	}
+};
+
+/**
+ * メッセージ表示終了フラグをセットする
+ * @param flag
+ */
+enchant.m3.Message.prototype.setEnd = function(flag) {
+	// TODO: リファクタリング
+	if (flag == true) {
+		this.wait = -1;
+		this.suffix = '';
 	}
 };
 

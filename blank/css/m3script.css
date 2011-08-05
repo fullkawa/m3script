@@ -44,3 +44,9 @@
 	border-radius: 8px;
 	padding: 8px;
 }
+
+.m3_eos {
+	color: blue;
+	text-align: right;
+	margin-right: 4px;
+}
