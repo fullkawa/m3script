@@ -6,6 +6,106 @@ catch(e) {
 }
 describe('m3script', function() {
 
+	describe('Picture', function() {
+
+		var p = new Picture();
+
+		it ('has "baseURL" for images', function() {
+			expect(p._baseURL).toBeDefined();
+		});
+
+		describe('baseURL', function() {
+
+			it ('is used for URL complement', function() {
+				var def = {
+					baseURL: 'http://m3itfc.appspot.com/',
+					images: {
+						'bg01': 'Bg_512.jpg'
+					}
+				};
+				p.addDefinition(def);
+				expect(p.ic('bg01').url).toEqual('http://m3itfc.appspot.com/Bg_512.jpg');
+			});
+		});
+	});
+
+	describe('Character', function() {
+
+		var anna;
+
+		it ('is independent from Game object', function() {
+			anna = new Character('anna', {
+				baseURL: 'http://m3itfc.appspot.com/figure/anna/',
+		    	shots: {
+			    	ws: { baseY: 460, scale: 0.9 },
+		    		cu: { baseY: 350, scale: 1.4 },
+		    		bs: { baseY: 390, scale: 1.2 },
+		    		ks: { baseY: 640, scale: 0.8 },
+		    		fs: { baseY: 870, scale: 0.7 }
+		    	},
+				images: {
+				    '基本': 'anna_0000.png'  // 標準, デフォルト
+				}
+			});
+		});
+
+		it ('stand on CENTER at first', function() {
+			expect(anna.posX).toEqual(anna.POSITIONS.indexOf('CENTER'));
+		});
+
+		it ('stand on LEFT_EDGE / LEFT / LEFT2 / CENTER / RIGHT2 / RIGHT / RIGHT_EDGE', function() {
+			expect(anna.POSITIONS.length).toEqual(7);
+
+			expect(anna.onLeft).toBeDefined();
+			anna.onLeft();
+			expect(anna.posX).toEqual(anna.POSITIONS.indexOf('LEFT'));
+
+			expect(anna.onLeft2).toBeDefined();
+			anna.onLeft2();
+			expect(anna.posX).toEqual(anna.POSITIONS.indexOf('LEFT2'));
+
+			expect(anna.onCenter).toBeDefined();
+			anna.onCenter();
+			expect(anna.posX).toEqual(anna.POSITIONS.indexOf('CENTER'));
+
+			expect(anna.onRight2).toBeDefined();
+			anna.onRight2();
+			expect(anna.posX).toEqual(anna.POSITIONS.indexOf('RIGHT2'));
+
+			expect(anna.onRight).toBeDefined();
+			anna.onRight();
+			expect(anna.posX).toEqual(anna.POSITIONS.indexOf('RIGHT'));
+		});
+
+		it ('can have 5 shots', function() {
+			expect(anna.SHOT_TYPES.length).toEqual(5);
+		});
+
+		it ('is displayed over waist by default', function() {
+			expect(anna.defaultShotType).toEqual('ws');
+		});
+
+		it ('can add definitions', function() {
+			var def_0001 = {
+				baseURL: 'http://m3itfc.appspot.com/figure/anna/',
+				images: {
+				    'にっこり': {
+				    	img: 'anna_0001.png',
+				    	keywords: 'にっこり, ふふーん？'
+				    }
+				}
+			};
+			anna.addDefinition(def_0001);
+			expect(anna._defImg['基本']).toBeDefined(); // 元の設定が残っていること
+			expect(anna._defImg['にっこり']).toBeDefined(); // 新しい設定が追加されていること
+		});
+
+		it ('provide properties for Character Viewer', function() {
+console.debug(anna.getImageList());
+			expect(anna.getImageList()).toBeDefined();
+		});
+	});
+
 	describe('Scenario', function() {
 
 		var s;
@@ -18,95 +118,12 @@ describe('m3script', function() {
 			expect(s.sequence).toBeDefined();
 		});
 
-		it ('has images in scenario', function() {
-			expect(s.images).toBeDefined();
-		});
-
-		it ('has "baseURL" for images', function() {
-			expect(s.baseURL).toBeDefined();
-		});
-
-		describe('baseURL', function() {
-
-			it ('is used for URL complement', function() {
-				s.baseURL = 'http://m3itfc.appspot.com/';
-				s.images = {
-					'bg01': 'Bg_512.jpg'
-				};
-				expect(s.img('bg01').url).toEqual('http://m3itfc.appspot.com/Bg_512.jpg');
-			});
-		});
-
 		it ('has 999 sequences by default', function() {
 			expect(s.MAX_SEQUENCE_NO).toEqual(999);
 		});
 
 		it ('can play on player', function() {
 			expect(s.start).toBeDefined();
-		});
-	});
-
-	describe('Character', function() {
-
-		var anna;
-
-		it ('is independent from Game object', function() {
-			anna = new Character('anna', {
-				baseURL: 'http://m3itfc.appspot.com/figure/anna/',
-				images: {
-				    '基本': {
-				    	img: 'anna_0000.png',  // 標準, デフォルト
-				    	shots: {
-					    	ws: { baseY: 460, scale: 0.9 }
-				    	}
-				    }
-				}
-			});
-		});
-
-		it ('stand on LEFT_EDGE / LEFT / LEFT2 / CENTER / RIGHT2 / RIGHT / RIGHT_EDGE', function() {
-			expect(anna.POSITIONS.length).toEqual(7);
-
-			expect(anna.onLeft).toBeDefined();
-			expect(anna.onLeft2).toBeDefined();
-			expect(anna.onCenter).toBeDefined();
-			expect(anna.onRight2).toBeDefined();
-			expect(anna.onRight).toBeDefined();
-		});
-
-		it ('can have 5 shots', function() {
-			expect(anna.SHOT_TYPES.length).toEqual(5);
-		});
-
-		it ('is displayed over waist by default', function() {
-			expect(anna.defaultShotType).toEqual('ws');
-		});
-
-		it ('can add definitions', function() {
-			var def_0000plus = {
-				images: {
-				    '基本': {
-				    	shots: {
-				    		cu: { baseY: 350, scale: 1.4 },
-				    		bs: { baseY: 390, scale: 1.2 },
-				    		ks: { baseY: 640, scale: 0.8 },
-				    		fs: { baseY: 870, scale: 0.7 }
-				    	}
-				    }
-				}
-			};
-			anna.addDefinition(def_0000plus);
-			expect(anna._defImg['基本']['ws']).toBeDefined(); // 元の設定が残っていること
-			expect(anna._defImg['基本']['cu']).toBeDefined(); // 新しい設定が追加されていること
-
-			var def_0001 = {
-				baseURL: 'http://m3itfc.appspot.com/figure/anna/',
-				images: {
-				    'にっこり': {
-				    	img: 'anna_0001.png' // にっこり, ふふーん？
-				    }
-				}
-			};
 		});
 	});
 

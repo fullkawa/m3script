@@ -9,7 +9,21 @@ try {
 catch(e) {
 	alert('M3Script need "enchant.js" ! \n[' + e.toString() + "]");
 }
-var s = new Scenario();
+
+var p = new Picture({
+	baseURL: 'http://m3itfc.appspot.com/',
+	images: {
+		'title': 'img_test/title.jpg',
+		// 'bg_3D': 'img_test/HNI_0004.MPO',
+		'bg01': 'Bg_512.jpg',
+		'bg01a': {
+			base: 'bg01',
+			img: 'Bg_512_1.png',
+			top: 200,
+			left: 100
+		}
+	}
+});
 
 var miku = new Character('miku', {
 	baseURL: 'http://m3itfc.appspot.com/figure/miku/',
@@ -28,22 +42,10 @@ var miku = new Character('miku', {
 	}
 });
 
-s.baseURL = "http://m3itfc.appspot.com/";
-s.images = {
-	'title': 'img_test/title.jpg',
-	// 'bg_3D': 'img_test/HNI_0004.MPO',
-	'bg01': 'Bg_512.jpg',
-	'bg01a': {
-		base: 'bg01',
-		img: 'Bg_512_1.png',
-		top: 200,
-		left: 100
-	}
-};
-
+var s = new Scenario();
 s.sequence = {
 	1: {
-		bg: s.img('title'),
+		bg: p.ic('title'),
 		msg: 'This is a Sample Novel.<br/><br/>'
 			+ '< HIT SPACE/ENTER KEY >'
 	},
@@ -61,7 +63,7 @@ s.sequence = {
 	},
 	3: {
 		transition: 'fadein',
-		bg: s.img('bg01'),
+		bg: p.ic('bg01'),
 		l1: miku.say('Hello, world !').as('[ miku ]'),
 		audio: {
 			src: 'audio/tetete.mp3',
@@ -73,7 +75,7 @@ s.sequence = {
 	},
 	5: {
 		transition: 'fadeout',
-		bg: s.img('bg01a'),
+		bg: p.ic('bg01a'),
 		l1: miku.wiz('smile'),
 		audio: 'audio/se01.mp3'
 	},

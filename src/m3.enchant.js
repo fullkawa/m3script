@@ -15,6 +15,59 @@
 enchant.m3 = {};
 
 /**
+ * [ 画像定義 ]
+ * シナリオ中で使用される画像の定義
+ */
+enchant.m3.Picture = function(definition) {
+	this._baseURL = '';
+	this._defImg = {};
+	this.addDefinition(definition);
+};
+enchant.m3.Picture.prototype = {
+	/**
+	 * 画像定義を追加/上書きします
+	 */
+	addDefinition: function(definition) {
+		if (definition != undefined) {
+			if (definition.baseURL != undefined) {
+				this._baseURL = definition.baseURL;
+			}
+			var imgs = definition.images;
+			for (var key in imgs) {
+				var img;
+				if (typeof(imgs[key]) == 'string') {
+					img = imgs[key];
+				} else {
+					// TODO: 差分定義
+					img = imgs[key].img;
+				}
+				this._defImg[key] = getFullURL(img, this._baseURL);
+			}
+		}
+	},
+
+	/**
+	 * @return 画像表示プロパティ一式
+	 * このクラスのインスタンス名は"p"を推奨する　→ p.ic('キー')
+	 */
+	ic: function(key) {
+		var props = {
+			url: this._defImg[key],
+			fitScreen: true
+		};
+		return props;
+	},
+
+	/**
+	 * 定義されている画像およびプロパティの一覧を返す
+	 * ※ 画像ビューワでの利用を想定
+	 */
+	getImageList: function() {
+		return this._defImg;
+	}
+};
+
+/**
  * [ キャラクター定義 ]
  *  シナリオ中に登場するキャラクターはすべてこのクラスのオブジェクトと
  *  なります。
@@ -42,7 +95,7 @@ enchant.m3.Character = function(name, definition) {
 
 	/**
 	 * キャラクターが現在取っているポーズの名前
-	 * 画像ファイルを取得する祭のキーとなる
+	 * 画像ファイルを取得する際のキーとなる
 	 * @type {String}
 	 */
 	this.key = '';
@@ -89,6 +142,8 @@ enchant.m3.Character = function(name, definition) {
 	 * キャラクター定義
 	 * @type {Object}
 	 */
+	this._baseURL = '';
+	this._defShots = {};
 	this._defImg = {};
 	this.addDefinition(definition);
 
@@ -137,20 +192,24 @@ enchant.m3.Character.prototype = {
 		 */
 		addDefinition: function(definition) {
 			if (definition != undefined) {
+				if (definition.baseURL != undefined) {
+					this._baseURL = definition.baseURL;
+				}
+				if (definition.shots != undefined) {
+					this._defShots = overwrite(definition.shots, this._defShots);
+				}
+
 				var def_images = definition.images;
 				if (def_images != undefined) {
+					// デフォルト値
 					var defs = {
-						baseURL: definition.baseURL,
-						shots: definition.shots
+						baseURL: this._baseURL,
+						shots: this._defShots
 					};
-
 					for (key in def_images) {
 						// デフォルトのポーズ名設定
 						if (this.key == undefined || this.key.length == 0) this.key = key;
-						// デフォルトのショット設定
-						if (defs.shots == undefined) {
-							defs.shots = def_images[key].shots;
-						}
+
 						this._defImg[key] = overwrite(this.normalizeDefinition(def_images[key], defs), this._defImg[key]);
 					}
 				}
@@ -162,48 +221,43 @@ enchant.m3.Character.prototype = {
 		 * ここでいう正規化とは、簡易定義も詳細定義も同じフォーマットにすることです
 		 *
 		 * [フォーマット]
-		 *   ショット名
-		 *     url
-		 *     baseY
-		 *     scale
+		 * - ポーズ名
+		 *   - ショット名
+		 *     - url
+		 *     - baseY
+		 *     - scale
 		 *
 		 * @param {Object} definition ポーズごとの定義
 		 * @param {Object} defs デフォルトの設定
 		 */
 		normalizeDefinition: function(definition, defs) {
-			var defimg = {};
-			if (typeof(definition) == 'string') {
-				// 簡易的な定義
-				for (var i=0; i<this.SHOT_TYPES.length; i++) {
-					var shot_type = this.SHOT_TYPES[i];
-					if (defs.shots == undefined || defs.shots[shot_type] == undefined) {
-						defimg[shot_type] = {};
-					} else {
-						defimg[shot_type] = defs.shots[shot_type];
-					}
-					defimg[shot_type].url = getFullURL(definition, defs.baseURL);
-				}
-			}
-			else {
-				// 詳細な定義
-				var shots = definition.shots;
-				for (var i=0; i<this.SHOT_TYPES.length; i++) {
-					var shot_type = this.SHOT_TYPES[i];
-					// デフォルトの設定
-					if (defs != undefined && defs.shots[shot_type] != undefined) {
-						defimg[shot_type] = clone(defs.shots[shot_type]);
-						defimg[shot_type].url = undefined;
-					}
+			var def_pose = {};
 
-					if (shots != undefined && shots[shot_type] != undefined) {
-						defimg[shot_type] = overwrite(shots[shot_type], defimg[shot_type]);
-					}
-					if (defimg[shot_type] != undefined && defimg[shot_type].url == undefined) {
-						defimg[shot_type].url = getFullURL(definition.img, defs.baseURL);
-					}
+			for (var i=0; i<this.SHOT_TYPES.length; i++) {
+				var shot_type = this.SHOT_TYPES[i];
+				var def_shot = {};
+
+				// 共通のショット設定を適用する
+				if (defs.shots == undefined || defs.shots[shot_type] == undefined) {
+					def_shot = {};
+				} else {
+					// def_shot = clone(defs.shots[shot_type]);
+					def_shot = defs.shots[shot_type];
 				}
+
+				if (typeof(definition) == 'string') {
+					// 簡易的な定義
+					def_shot.url = getFullURL(definition, defs.baseURL);
+				}
+				else {
+					// 詳細な定義
+					def_shot.url = getFullURL(definition.img, defs.baseURL);
+					def_shot.keywords = definition.keywords;
+				}
+				def_pose[shot_type] = def_shot;
 			}
-			return defimg;
+
+			return def_pose;
 		},
 
 		/**
@@ -230,7 +284,7 @@ enchant.m3.Character.prototype = {
 			var url = '';
 			var scale = 1;
 			var baseY = 0;
-			// ↑FIXME: 簡易定義のときは画像の下端(height)にしたいのだが…
+			// ↑FIXME: 簡易定義のときは画像の下端(height)にしたいのだが… shotsをコメントアウトして作成/検証
 			if (def != undefined) {
 				if (def.url != undefined) url = def.url;
 				if (def.scale != undefined) scale = def.scale;
@@ -249,7 +303,7 @@ enchant.m3.Character.prototype = {
 		},
 
 		/**
-		 * @return 台詞 character words
+		 * @return メッセージプロパティ一式 character words
 		 *
 		 *   name: メッセージウィンドウに表示されるときの名前
 		 *         name in message window
@@ -263,6 +317,14 @@ enchant.m3.Character.prototype = {
 				msg: this.msg
 			};
 			return words;
+		},
+
+		/**
+		 * 定義されている画像およびプロパティの一覧を返す
+		 * ※ キャラクタービューワでの利用を想定
+		 */
+		getImageList: function() {
+			return this._defImg;
 		},
 
 		/**
@@ -346,25 +408,25 @@ enchant.m3.Character.prototype = {
  * > Scenario data
  */
 enchant.m3.Scenario = function() {
-	/**
-	 * @type {String]
-	 * URLの記述を短縮するために、共通部分を指定することが出来る。
-	 */
-	this.baseURL = '';
-
-	/**
-	 * [ 使用する画像の定義 ]
-	 * @type {Object}
-	 *
-	 * key:
-	 *   シナリオ内で指定するときの名前
-	 *   > key is name in scenario.
-	 *
-	 * value:
-	 *   画像URL
-	 *   > image URL
-	 */
-	this.images = {};
+//	/**
+//	 * @type {String]
+//	 * URLの記述を短縮するために、共通部分を指定することが出来る。
+//	 */
+//	this.baseURL = '';
+//
+//	/**
+//	 * [ 使用する画像の定義 ]
+//	 * @type {Object}
+//	 *
+//	 * key:
+//	 *   シナリオ内で指定するときの名前
+//	 *   > key is name in scenario.
+//	 *
+//	 * value:
+//	 *   画像URL
+//	 *   > image URL
+//	 */
+//	this.images = {};
 
 	/**
 	 * [ シナリオ定義 ]
@@ -377,26 +439,26 @@ enchant.m3.Scenario.prototype = {
 	 */
 	MAX_SEQUENCE_NO: 999,
 
-	/**
-	 * @return {Object} 画像(一枚絵・背景)表示プロパティ一式
-	 *
-	 * @param {String} key imagesのキー
-	 */
-	img: function(key) {
-		var props = { fitScreen: true };
-
-		var value = this.images[key];
-		if (value != undefined) {
-			if (typeof(value) == 'string') {
-				props.url = getFullURL(value, this.baseURL);
-			}
-			else {
-				// TODO: 差分定義
-			}
-		}
-
-		return props;
-	},
+//	/**
+//	 * @return {Object} 画像(一枚絵・背景)表示プロパティ一式
+//	 *
+//	 * @param {String} key imagesのキー
+//	 */
+//	img: function(key) {
+//		var props = { fitScreen: true };
+//
+//		var value = this.images[key];
+//		if (value != undefined) {
+//			if (typeof(value) == 'string') {
+//				props.url = getFullURL(value, this.baseURL);
+//			}
+//			else {
+//				// TODO: 差分定義
+//			}
+//		}
+//
+//		return props;
+//	},
 
 	/**
 	 * 最初のシーケンスから再生する
@@ -419,6 +481,7 @@ enchant.m3.Scenario.prototype = {
 enchant.m3.Player = function(game, scenario) {
 	/**
 	 * 画像バンク
+	 * ※使用されているもののみ
 	 * key, value {String} 画像URL
 	 */
 	this.imgs = {};
@@ -539,13 +602,12 @@ enchant.m3.Player.prototype = {
 			var layer = cut[key];
 			if (layer != undefined) {
 				if (layer instanceof Character) {
-					// 立ち絵の場合
 					sequence[key] = layer.getProps();
 				}
 				else {
-					// 背景(一枚絵)の場合
 					sequence[key] = layer;
 				}
+console.debug(sequence[key]);
 				this.stockImages(sequence[key]);
 			}
 		}
