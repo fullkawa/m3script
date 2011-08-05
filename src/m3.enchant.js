@@ -463,9 +463,9 @@ enchant.m3.Player = function(game, scenario) {
 	/**
 	 * 全シーケンス再生終了後に表示するメッセージ
 	 */
-	this.endMessage = 'END';
-	if (scenario.endMessage != undefined) {
-		this.endMessage = scenario.endMessage;
+	this.eog = 'END';
+	if (scenario.eog != undefined) {
+		this.eog = scenario.eog;
 	}
 
 	var game = enchant.Game.instance;
@@ -697,7 +697,7 @@ enchant.m3.Player.prototype = {
 			self.seqNo++;
 
 		} else {
-			alert(self.endMessage);
+			alert(self.eog);
 		}
 	},
 

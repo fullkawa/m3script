@@ -79,6 +79,6 @@ s.sequence = [
 	}
 ];
 
-s.endMessage = 'おわり';
+s.eog = 'おわり';
 
 s.start();
