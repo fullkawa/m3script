@@ -10,7 +10,7 @@ catch(e) {
 	alert('M3Script need "enchant.js" ! \n[' + e.toString() + "]");
 }
 
-var p = new Picture({
+var i = new ImgBank({
 	baseURL: 'http://m3itfc.appspot.com/',
 	images: {
 		'title': 'img_test/title.jpg',
@@ -45,7 +45,7 @@ var miku = new Character('miku', {
 var s = new Scenario();
 s.sequence = {
 	1: {
-		bg: p.ic('title'),
+		bg: i.mg('title'),
 		msg: 'This is a Sample Novel.<br/><br/>'
 			+ '< HIT SPACE/ENTER KEY >'
 	},
@@ -63,7 +63,7 @@ s.sequence = {
 	},
 	3: {
 		transition: 'fadein',
-		bg: p.ic('bg01'),
+		bg: i.mg('bg01'),
 		l1: miku.say('Hello, world !').as('[ miku ]'),
 		audio: {
 			src: 'audio/tetete.mp3',
@@ -75,7 +75,7 @@ s.sequence = {
 	},
 	5: {
 		transition: 'fadeout',
-		bg: p.ic('bg01a'),
+		bg: i.mg('bg01a'),
 		l1: miku.wiz('smile'),
 		audio: 'audio/se01.mp3'
 	},

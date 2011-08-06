@@ -8,10 +8,10 @@ describe('m3script', function() {
 
 	describe('Picture', function() {
 
-		var p = new Picture();
+		var i = new ImgBank();
 
 		it ('has "baseURL" for images', function() {
-			expect(p._baseURL).toBeDefined();
+			expect(i._baseURL).toBeDefined();
 		});
 
 		describe('baseURL', function() {
@@ -23,8 +23,8 @@ describe('m3script', function() {
 						'bg01': 'Bg_512.jpg'
 					}
 				};
-				p.addDefinition(def);
-				expect(p.ic('bg01').url).toEqual('http://m3itfc.appspot.com/Bg_512.jpg');
+				i.addDefinition(def);
+				expect(i.mg('bg01').url).toEqual('http://m3itfc.appspot.com/Bg_512.jpg');
 			});
 		});
 	});

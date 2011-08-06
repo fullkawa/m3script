@@ -66,7 +66,7 @@ var anna = new Character('anna', {
 	}
 });
 
-var p = new Picture({
+var i = new ImgBank({
 	baseURL: 'http://m3itfc.appspot.com/',
 	images: {
 		'bg01': 'Bg_512.jpg'
@@ -77,7 +77,7 @@ var s = new Scenario();
 s.sequence = [
 	{
 		transition: 'fadein',
-		bg: p.ic('bg01'),
+		bg: i.mg('bg01'),
 		l1: anna.say('「は、はじめましてっ！　『峪　あんな』です。」').as('あんな'),
 		audio: {
 			src: 'audio/tetete.mp3',

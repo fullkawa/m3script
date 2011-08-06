@@ -17,6 +17,10 @@
  *
  * TODO: ver.0.3を固める
  *  - 残りのタスクを片付ける > https://twitter.com/#!/messages
+ *   - _ddef: default define
+ *   - "phase" -> load scenario, message
+ *   - selection into message
+ *
  *  - http://wise9.jp/archives/2822 をテスト、プレイヤー名をどう保存するか？
  *  - 一通りのブラウザ / jsdo.it, 9leapでテストする
  *
@@ -33,12 +37,12 @@ enchant.m3 = {};
  * [ 画像定義 ]
  * シナリオ中で使用される画像の定義
  */
-enchant.m3.Picture = function(definition) {
+enchant.m3.ImgBank = function(definition) {
 	this._baseURL = '';
 	this._defImg = {};
 	this.addDefinition(definition);
 };
-enchant.m3.Picture.prototype = {
+enchant.m3.ImgBank.prototype = {
 	/**
 	 * 画像定義を追加/上書きします
 	 */
@@ -63,9 +67,9 @@ enchant.m3.Picture.prototype = {
 
 	/**
 	 * @return 画像表示プロパティ一式
-	 * このクラスのインスタンス名は"p"を推奨する　→ p.ic('キー')
+	 * このクラスのインスタンス名は"i"を推奨する　→ i.mg('キー')
 	 */
-	ic: function(key) {
+	mg: function(key) {
 		var props = {
 			url: this._defImg[key],
 			fitScreen: true
