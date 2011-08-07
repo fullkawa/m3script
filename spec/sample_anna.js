@@ -19,10 +19,7 @@ var anna = new Character('anna', {
 		fs: { baseY: 610, scale: 0.35 }
 	},
 	images: {
-	    '基本': {
-	    	img: 'anna_0000.png',
-	    	keywords: '標準, デフォルト'
-	    },
+	    '基本': { img: 'anna_0000.png', keywords: '標準, デフォルト' },
 	    'にっこり': {
 	    	img: 'anna_0001.png',
 	    	keywords: 'にっこり, ふふーん？'
@@ -66,6 +63,14 @@ var anna = new Character('anna', {
 	}
 });
 
+var shot_type = 'ws';
+if (location.search != undefined && location.search.indexOf('shot_type=') > 0) {
+	shot_type = location.search.substring(location.search.indexOf('shot_type=')+'shot_type='.length);
+	console.debug('shot_type: '+shot_type);
+}
+
+anna.shot_type = shot_type;
+
 var i = new ImgBank({
 	baseURL: 'http://m3itfc.appspot.com/',
 	images: {
@@ -89,6 +94,18 @@ s.sequence = [
 	},
 	{
 		l1: anna.act('ごめんなさい･･･').say('「『“やま”ｲﾗﾈ (ﾟ⊿ﾟ)』って、よく言われます･･･」')
+	},
+	{
+		select: {
+			msg: 'ショットを選択して下さい。',
+			options: {
+				1: { label: 'cu', linkTo: 'sample_anna.html?shot_type=cu' },
+				2: { label: 'bs', linkTo: 'sample_anna.html?shot_type=bs' },
+				3: { label: 'ws', linkTo: 'sample_anna.html?shot_type=ws' },
+				4: { label: 'ks', linkTo: 'sample_anna.html?shot_type=ks' },
+				5: { label: 'fs', linkTo: 'sample_anna.html?shot_type=fs' }
+			}
+		}
 	}
 ];
 s.eog = 'おわり';

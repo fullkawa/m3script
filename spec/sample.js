@@ -50,16 +50,28 @@ s.sequence = {
 			+ '< HIT SPACE/ENTER KEY >'
 	},
 	2: {
-		select: {
-			msg: 'This is selection.<br>What do you do ?',
-			options: {
-			    1: { label: 'Start', exec: function() { this.params['started'] = true; } },
-			    2: { label: 'Exit', linkTo: 'http://www.google.com/' },
-			    3: { label: 'option 3'},
+		msg: {
+			text: 'This is selection.<br>What do you do ?',
+			select: {
+			    1: { label: 'Set flag', exec: function() { this.param['started'] = true; } },
+			    2: { label: 'Jump', exec: function() { return 'http://www.google.com/'; } },
+			    3: { label: 'Exit', linkTo: 'http://www.google.com/' },
 			    4: { label: 'option 4'},
 			    5: { label: 'option 5'}
 			}
 		}
+	/*
+		select: {
+			msg: 'This is selection.<br>What do you do ?',
+			options: {
+			    1: { label: 'Set flag', exec: function() { this.param['started'] = true; } },
+			    2: { label: 'Jump', exec: function() { return 'http://www.google.com/'; } },
+			    3: { label: 'Exit', linkTo: 'http://www.google.com/' },
+			    4: { label: 'option 4'},
+			    5: { label: 'option 5'}
+			}
+		}
+		*/
 	},
 	3: {
 		transition: 'fadein',

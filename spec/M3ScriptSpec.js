@@ -23,7 +23,7 @@ describe('m3script', function() {
 						'bg01': 'Bg_512.jpg'
 					}
 				};
-				i.addDefinition(def);
+				i._addDefinition(def);
 				expect(i.mg('bg01').url).toEqual('http://m3itfc.appspot.com/Bg_512.jpg');
 			});
 		});
@@ -95,14 +95,14 @@ describe('m3script', function() {
 				    }
 				}
 			};
-			anna.addDefinition(def_0001);
+			anna._addDefinition(def_0001);
 			expect(anna._defImg['基本']).toBeDefined(); // 元の設定が残っていること
 			expect(anna._defImg['にっこり']).toBeDefined(); // 新しい設定が追加されていること
 		});
 
 		it ('provide properties for Character Viewer', function() {
-console.debug(anna.getImageList());
-			expect(anna.getImageList()).toBeDefined();
+console.debug(anna._getImageList());
+			expect(anna._getImageList()).toBeDefined();
 		});
 	});
 
