@@ -28,7 +28,6 @@
  * TODO: ver.0.9を固める
  *  - 残りのタスクを片付ける > https://twitter.com/#!/messages
  *   - shot_type, wait -> scenario, player ; setting?
- *   - _ddef: default define
  *   - "phase" -> load scenario, message
  *   - duration
  *   - selection into message
