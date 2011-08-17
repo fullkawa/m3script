@@ -10,14 +10,13 @@ catch(e) {
 	alert('M3Script need "enchant.js" ! \n[' + e.toString() + ']');
 }
 var anna = new Character('anna', {
-	baseURL: 'http://m3itfc.appspot.com/figure/anna/',
 	shots: {
-    	ws: { baseY: 460, scale: 0.9 },
-		cu: { baseY: 320, scale: 1.4 },
-		bs: { baseY: 390, scale: 1.2 },
-		ks: { baseY: 560, scale: 0.6 },
-		fs: { baseY: 610, scale: 0.35 }
+    	ws: { baseY: 460, scale: 0.8 },
+		cu: { baseY: 320, scale: 1.3 },
+		bs: { baseY: 390, scale: 1.1 },
+		ks: { baseY: 560, scale: 0.5 }
 	},
+	baseURL: 'http://m3itfc.appspot.com/figure/anna/',
 	images: {
 	    '基本': { img: 'anna_0000.png', keywords: '標準, デフォルト' },
 	    'にっこり': {
@@ -63,13 +62,18 @@ var anna = new Character('anna', {
 	}
 });
 
-var shot_type = 'ws';
-if (location.search != undefined && location.search.indexOf('shot_type=') > 0) {
-	shot_type = location.search.substring(location.search.indexOf('shot_type=')+'shot_type='.length);
-	console.debug('shot_type: '+shot_type);
-}
-
-anna.shot_type = shot_type;
+var miku = new Character('miku', {
+	baseURL: 'http://m3itfc.appspot.com/figure/miku/',
+	shots: {
+		ks: { baseY: 268, scale: 1.1 },
+		ws: { baseY: 180, scale: 1.2 },
+		bs: { baseY: 130, scale: 1.8 },
+		cu: { baseY: 100, scale: 2.2 }
+	},
+	images: {
+		'default': 'miku_00.png'
+	}
+});
 
 var i = new ImgBank({
 	baseURL: 'http://m3itfc.appspot.com/',
@@ -79,9 +83,26 @@ var i = new ImgBank({
 });
 
 var s = new Scenario();
+
+var shot_type = 'ws';
+if (location.search != undefined && location.search.indexOf('shot_type=') > 0) {
+	shot_type = location.search.substring(location.search.indexOf('shot_type=')+'shot_type='.length);
+	console.debug('shot_type: '+shot_type);
+}
+
+s.shot_type = shot_type;
+anna.shot_type = shot_type; // FIXME: delete
+
 s.sequence = [
+	/*
 	{
-		transition: 'fadein',
+		layers: {
+			transition: 'fade'
+		}
+	},
+	*/
+	{
+		// FIXME: ん～、単独でtransitionをかけたいときはどう指定させよう？
 		bg: i.mg('bg01'),
 		l1: anna.say('「は、はじめましてっ！　『峪　あんな』です。」').as('あんな'),
 		audio: {
@@ -89,6 +110,28 @@ s.sequence = [
 			loop: true
 		}
 	},
+	/*
+	{
+		l1: anna.say('「あのあのあのっ、お名前･･･教えてもらえますか？」'),
+		msg: {
+			input: {
+				message: '名前を入力してください。',
+				'default': '山田 太郎',
+				after: function(value) {
+					this.param['name'] = value;
+				}
+			}
+		}
+	},
+	{
+		l1: anna.say('「' + this.param['name'] + ' ･･･さん？」'),
+		msg: {
+			confirm: {
+				cancel: 'sample_anna.html?seqNo=2'
+			}
+		}
+	},
+	*/
 	{
 		l1: anna.act('照れ').say('「“やま”へんに“たに”で、“たに”って読みますっ！」')
 	},
@@ -96,16 +139,37 @@ s.sequence = [
 		l1: anna.act('ごめんなさい･･･').say('「『“やま”ｲﾗﾈ (ﾟ⊿ﾟ)』って、よく言われます･･･」')
 	},
 	{
+		l1: anna.onLeft(),
+		l2: miku.onCenter(),
+		l3: anna.onRight()
+	},
+	{
+		l1: anna.onLeft2(),
+		l2: miku.onRight2(),
+		l3: i.mg('clear')
+	},
+	{
+	/*
+		msg: {
+			text: 'ショットを選択して下さい。',
+			select: {
+				1: { label: 'cu', linkTo: 'sample_anna.html?shot_type=cu' },
+				2: { label: 'bs', linkTo: 'sample_anna.html?shot_type=bs' },
+				3: { label: 'ws', linkTo: 'sample_anna.html?shot_type=ws' },
+				4: { label: 'ks', linkTo: 'sample_anna.html?shot_type=ks' }
+			}
+		}
+	*/
 		select: {
 			msg: 'ショットを選択して下さい。',
 			options: {
 				1: { label: 'cu', linkTo: 'sample_anna.html?shot_type=cu' },
 				2: { label: 'bs', linkTo: 'sample_anna.html?shot_type=bs' },
 				3: { label: 'ws', linkTo: 'sample_anna.html?shot_type=ws' },
-				4: { label: 'ks', linkTo: 'sample_anna.html?shot_type=ks' },
-				5: { label: 'fs', linkTo: 'sample_anna.html?shot_type=fs' }
+				4: { label: 'ks', linkTo: 'sample_anna.html?shot_type=ks' }
 			}
 		}
+	/* */
 	}
 ];
 s.eog = 'おわり';

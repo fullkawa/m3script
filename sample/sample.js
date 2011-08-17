@@ -97,4 +97,9 @@ s.sequence = {
 	}
 };
 
-s.start();
+// s.start();
+
+window.onload = function() {
+	var player = new Player(s);
+	player.start();
+};

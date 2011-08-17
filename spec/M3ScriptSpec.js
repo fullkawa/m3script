@@ -1,33 +1,27 @@
-try {
-	enchant('m3');
-}
-catch(e) {
-	alert(e);
-}
 describe('m3script', function() {
 
-	describe('Picture', function() {
-
-		var i = new ImgBank();
-
-		it ('has "baseURL" for images', function() {
-			expect(i._baseURL).toBeDefined();
-		});
-
-		describe('baseURL', function() {
-
-			it ('is used for URL complement', function() {
-				var def = {
-					baseURL: 'http://m3itfc.appspot.com/',
-					images: {
-						'bg01': 'Bg_512.jpg'
-					}
-				};
-				i._addDefinition(def);
-				expect(i.mg('bg01').url).toEqual('http://m3itfc.appspot.com/Bg_512.jpg');
-			});
-		});
-	});
+//	describe('Picture', function() {
+//
+//		var i = new ImgBank();
+//
+//		it ('has "baseURL" for images', function() {
+//			expect(i._baseURL).toBeDefined();
+//		});
+//
+//		describe('baseURL', function() {
+//
+//			it ('is used for URL complement', function() {
+//				var def = {
+//					baseURL: 'http://m3itfc.appspot.com/',
+//					images: {
+//						'bg01': 'Bg_512.jpg'
+//					}
+//				};
+//				i._addDefinition(def);
+//				expect(i.mg('bg01').url).toEqual('http://m3itfc.appspot.com/Bg_512.jpg');
+//			});
+//		});
+//	});
 
 	describe('Character', function() {
 
@@ -40,8 +34,7 @@ describe('m3script', function() {
 			    	ws: { baseY: 460, scale: 0.9 },
 		    		cu: { baseY: 350, scale: 1.4 },
 		    		bs: { baseY: 390, scale: 1.2 },
-		    		ks: { baseY: 640, scale: 0.8 },
-		    		fs: { baseY: 870, scale: 0.7 }
+		    		ks: { baseY: 640, scale: 0.8 }
 		    	},
 				images: {
 				    '基本': 'anna_0000.png'  // 標準, デフォルト
@@ -77,8 +70,8 @@ describe('m3script', function() {
 			expect(anna.posX).toEqual(anna.POSITIONS.indexOf('RIGHT'));
 		});
 
-		it ('can have 5 shots', function() {
-			expect(anna.SHOT_TYPES.length).toEqual(5);
+		it ('can have 4 shots', function() {
+			expect(anna.SHOT_TYPES.length).toEqual(4);
 		});
 
 		it ('is displayed over waist by default', function() {
@@ -101,7 +94,6 @@ describe('m3script', function() {
 		});
 
 		it ('provide properties for Character Viewer', function() {
-console.debug(anna._getImageList());
 			expect(anna._getImageList()).toBeDefined();
 		});
 	});

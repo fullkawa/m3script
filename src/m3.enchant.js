@@ -13,13 +13,26 @@
 */
 
 /*
+ * [コーディング規約]
+ *
+ * - enchant.Class.create で定義したクラスのメソッドは(initialize以外)
+ *   enchant.m3.`ClassName`.prototype.`MethodName` にて"一つずつ"定義する
+ *   ※ eclipse でメンバ表示させるため
+ *   メソッドがないクラスは DUMMY メソッドを定義する
+ *   ※ eclipse でクラス表示させるため
+ */
+
+/*
  * 今後の方針とか
  *
- * TODO: ver.0.3を固める
+ * TODO: ver.0.9を固める
  *  - 残りのタスクを片付ける > https://twitter.com/#!/messages
+ *   - shot_type, wait -> scenario, player ; setting?
  *   - _ddef: default define
  *   - "phase" -> load scenario, message
+ *   - duration
  *   - selection into message
+ *   - click -> selection color change + ちと、ボタンも小さいかな･･･
  *
  *  - http://wise9.jp/archives/2822 をテスト、プレイヤー名をどう保存するか？
  *  - 一通りのブラウザ / jsdo.it, 9leapでテストする
@@ -34,64 +47,206 @@
 enchant.m3 = {};
 
 /**
- * [ 画像定義 ]
- *  シナリオ中で使用される画像の定義
+ * [ 定義 ]
+ *  定義には二種類あります。
+ *  定義を楽にするための「共通定義」と「(項目毎の)定義」です。
  */
-enchant.m3.ImgBank = function(definition) {
-	this._baseURL = '';
-	this._defImg = {};
-
-	this._addDefinition(definition);
-};
-/*
- * メソッド名の命名ルール
- * - "_"から始ま“らない”メソッドはシナリオ中での利用を想定している
- */
-enchant.m3.ImgBank.prototype = {
+enchant.m3.Definition = function(desc) {
 	/**
-	 * 画像定義を追加/上書きします
+	 * デフォルトの定義
+	 * これは、実装(サブ)クラス毎に設定される前提
 	 */
-	_addDefinition: function(definition) {
-		if (definition != undefined) {
-			if (definition.baseURL != undefined) {
-				this._baseURL = definition.baseURL;
-			}
-			var imgs = definition.images;
-			for (var key in imgs) {
-				var img;
-				if (typeof(imgs[key]) == 'string') {
-					img = imgs[key];
-				} else {
-					// TODO: 差分定義
-					img = imgs[key].img;
-				}
-				this._defImg[key] = getFullURL(img, this._baseURL);
+	this._default = {};
+
+	/**
+	 * 定義
+	 */
+	this._definition = {};
+
+	this._desc = desc;
+
+	this.addDefinition(desc);
+};
+
+enchant.m3.Definition.prototype = {
+	/**
+	 * 定義を(追加)読み込みする
+	 * @param desc
+	 *
+	 * * setter for this._default, _definition
+	 */
+	addDefinition: function(desc) {
+		this._loadCommonDefinition(desc);
+		this._loadDefinition(desc);
+	},
+
+	/**
+	 * 共通定義の名前
+	 * 実装クラスにて上書き前提
+	 */
+	COMMON_DEF_NAMES: [],
+
+	/**
+	 * 共通定義をロードする
+	 * 定義は実装クラスにて
+	 *
+	 * * setter for this._default
+	 */
+	_loadCommonDefinition: function(desc) {
+		if (desc != undefined) {
+			for (var i=0; i<this.COMMON_DEF_NAMES.length; i++) {
+				var key = this.COMMON_DEF_NAMES[i];
+//console.debug(key);
+//console.debug(this._default[key]);
+				var def_prop_name = this.PROP_NAMES[key];
+				var noramalized = this._normalize(desc[key], def_prop_name);
+				this._default[key] = overwrite(noramalized, this._default[key]);
+//console.debug(this._default[key]);
 			}
 		}
 	},
 
 	/**
-	 * @return 画像表示プロパティ一式
-	 * このクラスのインスタンス名は"i"を推奨する　→ i.mg('キー')
+	 * 有効な定義名とデフォルトプロパティ名
+	 * 実装クラスにて上書き前提
 	 */
-	mg: function(key) {
-		var props = {
-			url: this._defImg[key],
-			fitScreen: true
-		};
-		return props;
+	PROP_NAMES: {},
+
+	/**
+	 * 定義をロードする
+	 *
+	 * * setter for this._definition
+	 */
+	_loadDefinition: function(desc) {
+		if (desc != undefined) {
+			for (var key in desc) {
+				var def_prop_name = this.PROP_NAMES[key];
+				if (def_prop_name != undefined) {
+					this._definition[key] = this._normalize(desc[key], def_prop_name);
+				}
+			}
+		}
 	},
 
 	/**
-	 * 定義されている画像およびプロパティの一覧を返す
-	 * ※ 画像ビューワでの利用を想定
+	 * 簡易定義/詳細定義の違いを吸収する。すなわち常に「詳細定義」が得られる
+	 *
+	 * @param def {Any} 定義内容
+	 * @param def_name {String} 簡易定義の時、マッピングされる定義名
+	 *
+	 * * def -> noramalized
 	 */
-	_getImageList: function() {
-		return this._defImg;
+	_normalize: function(def, def_name) {
+		var normalized = {};
+
+		if (typeof(def) == 'string') {
+			if (def_name != undefined) {
+				normalized[def_name] = def;
+			}
+		}
+		else {
+			normalized = def;
+		}
+		return normalized;
 	}
 };
 
 /**
+ * [ 画像定義 ]
+ *  シナリオ中で使用される画像の定義
+ */
+enchant.m3.ImgBank = enchant.Class.create(enchant.m3.Definition, {
+	initialize: function(desc) {
+		Definition.call(this);
+
+		/**
+		 *
+		 */
+		this._defImg = {};
+
+		this._default = {
+			baseURL: { url: '' }
+		};
+
+		this.COMMON_DEF_NAMES = ['shots', 'baseURL'];
+
+		this.PROP_NAMES = {
+			baseURL: 'url',
+			images: 'default'
+		};
+
+		this.addDefinition(desc);
+	}
+});
+
+/**
+ * ImgBank用の定義処理
+ * @param desc
+ *
+ * * setter for this._default, _definition
+ */
+enchant.m3.ImgBank.prototype.addDefinition = function(desc) {
+	this._loadCommonDefinition(desc);
+	this._loadDefinition(desc);
+	this._defImages();
+};
+
+/**
+ * * setter for this._defImg
+ */
+enchant.m3.ImgBank.prototype._defImages = function() {
+	var images = this._definition.images;
+	for (var key in images) {
+		var value = images[key];
+		this._defImg[key] = this._normalizeImage(value);
+	}
+};
+
+/**
+ * 画像の簡易定義/詳細定義の違いを吸収する。すなわち常に「詳細定義」が得られる
+ *
+ * @param def {Any} 定義内容
+ *
+ * * def -> noramalized
+ */
+enchant.m3.ImgBank.prototype._normalizeImage = function(def) {
+	var normalized = {};
+	if (typeof(def) == 'string') {
+		normalized = {
+			url: getFullURL(def, this._definition.baseURL.url),
+			fitScreen: true
+		};
+	}
+	else {
+		normalized = value;
+		normalized.url = getFullURL(def.img, this._definition.baseURL.url);
+	}
+	return normalized;
+};
+
+/**
+ * 定義されている画像およびプロパティの一覧を返す
+ * ※ 画像ビューワでの利用を想定
+ *
+ * * getter for this._defImg
+ */
+enchant.m3.ImgBank.prototype._getImageList = function() {
+	return this._defImg;
+};
+
+/**
+ * @returns 画像表示プロパティ一式
+ * このクラスのインスタンス名は"i"を推奨する　→ i.mg('キー')
+ *
+ * * getter for this._defImg
+ */
+enchant.m3.ImgBank.prototype.mg = function(key) {
+	return this._defImg[key];
+};
+
+/**
+ * TODO: flyweightパターンの適用でオブジェクト節約？
+ *
  * [ キャラクター定義 ]
  *  シナリオ中に登場するキャラクターはすべてこのクラスのオブジェクトと
  *  なります。
@@ -206,9 +361,8 @@ enchant.m3.Character.prototype = {
 	 * bs: Bust Shot 胸から上
 	 * ws: Waist Shot 腰から上
 	 * ks: Knee Shot ひざから上
-	 * fs: Full Shot 全身
 	 */
-	SHOT_TYPES: ['cu', 'bs', 'ws', 'ks', 'fs'],
+	SHOT_TYPES: ['cu', 'bs', 'ws', 'ks'],
 
 	/**
 	 * 指定がないときのショット
@@ -289,7 +443,7 @@ enchant.m3.Character.prototype = {
 	},
 
 	/**
-	 * @return キャラクタ表示プロパティ一式 character properties
+	 * @returns キャラクタ表示プロパティ一式 character properties
 	 *
 	 *   key: ポーズ名
 	 *
@@ -331,7 +485,7 @@ enchant.m3.Character.prototype = {
 	},
 
 	/**
-	 * @return メッセージプロパティ一式 character words
+	 * @returns メッセージプロパティ一式 character words
 	 *
 	 *   name: メッセージウィンドウに表示されるときの名前
 	 *         name in message window
@@ -437,7 +591,11 @@ enchant.m3.Character.prototype = {
 enchant.m3.Scenario = function() {
 	/**
 	 * シーケンスデータ
+	 *
 	 * タイムラインごと(画像(レイヤ)/メッセージ/サウンド)に定義する
+	 * 値として定義されるのはオブジェクト。その中に必要なプロパティが定義されている
+	 * 値が文字列の場合は、決められた(デフォルトの)プロパティにセットされる
+	 * 値が関数の場合は、実行結果が利用される
 	 */
 	this.sequence = {};
 
@@ -458,6 +616,7 @@ enchant.m3.Scenario.prototype = {
 	MAX_SEQUENCE_NO: 999,
 
 	/**
+	 * @deprecated
 	 * 最初のシーケンスから再生する
 	 * > play on new game
 	 */
@@ -675,7 +834,7 @@ enchant.m3.Player.prototype = {
 	 * ゲーム画面を構成する
 	 * ※静的な画面要素のみ <-> play
 	 *
-	 * @return {enchant.Scene} ゲーム画面
+	 * @returns {enchant.Scene} ゲーム画面
 	 */
 	build: function() {
 		var screen = new Scene();
@@ -809,7 +968,7 @@ enchant.m3.Player.prototype = {
 
 	/**
 	 * 使用画像URLを配列で全て取得する
-	 * @return {Array}
+	 * @returns {Array}
 	 */
 	getImageURLArray: function() {
 		var arr = [];
@@ -899,6 +1058,7 @@ enchant.m3.Layer = enchant.Class.create(enchant.Group, {
 
 /**
  * シーケンス情報をセットする
+ * 処理は setImage に委譲される
  *
  * @param {Object} seq
  * @param {Object} next_seq (optional)
@@ -915,6 +1075,8 @@ enchant.m3.Layer.prototype.setSequence = function(seq, next_seq) {
 		console.warn('seq is undefined.');
 	}
 };
+
+enchant.Event.ON_READY = 'onready';
 
 /**
  * 表示する画像の各プロパティをセットする
@@ -964,6 +1126,11 @@ enchant.m3.Layer.prototype.setImage = function(seq) {
 		for (var key in enable_props) {
 			if (seq[key] != undefined) this[key] = seq[key];
 		}
+
+		// FIXME: on test
+		var e = new enchant.Event(enchant.Event.ON_READY);
+console.debug(e);
+		this.dispatchEvent(e);
 	}
 	else {
 		console.warn('seq is undefined.');
@@ -1195,6 +1362,11 @@ enchant.m3.Message.prototype.setMessage = function(text, name) {
 	if (text != undefined) {
 		this.textBuf = text;
 	}
+
+	// FIXME: on test
+	this.addEventListener(enchant.Event.ON_READY, function() {
+		console.debug('catch ON_READY');
+	});
 };
 
 /**
