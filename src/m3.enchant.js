@@ -46,70 +46,100 @@
 enchant.m3 = {};
 
 /**
- * [ 定義 ]
+ * [ 画像定義 ]
+ *  シナリオ中で使用される画像の定義
+ *
  *  定義には二種類あります。
- *  定義を楽にするための「共通定義」と「(項目毎の)定義」です。
+ *  定義の記述を楽にするための「共通定義」と
+ *  実際の「定義」です。
+ *
+ *  @param {Object} desc 定義記述
  */
-enchant.m3.Definition = function(desc) {
-	/**
-	 * デフォルトの定義
-	 * これは、実装(サブ)クラス毎に設定される前提
-	 */
-	this._default = {};
+enchant.m3.ImgDefinition = function(desc) {
+	try {
+		/**
+		 * @type {Array} 共通定義とみなされる定義名
+		 */
+		this.COMMON_DEF_NAMES = ['current'];
 
-	/**
-	 * 定義
-	 */
-	this._definition = {};
+		/**
+		 * @type {Object} _default デフォルト/共通定義
+		 *
+		 * デフォルト定義とは、クラスによって定義された共通定義のことです。
+		 * さらにユーザが作成した定義ファイルによって上書きされたものが共通定義として利用されます。
+		 */
+		this._default = {
+			current: { location: '' }
+		};
 
-	this._desc = desc;
+		/**
+		 * @type {Object} 有効な定義
+		 * keyが定義名、valueが省略時の細目名
+		 */
+		this.DEF_NAMES = { images: 'img' };
 
-	this.addDefinition(desc);
+		/**
+		 * @type {Object} _definition 定義
+		 */
+		this._definition = {};
+
+		/**
+		 * @type {Object} プロパティ
+		 *
+		 * key: 画像のキー(一意な名称)
+		 * value: そのキーで示される画像のプロパティ
+		 */
+		this._props = {};
+
+		this.addDefinition(desc);
+	}
+	catch(e) {
+		console.warn(e);
+	}
 };
 
-enchant.m3.Definition.prototype = {
+enchant.m3.ImgDefinition.prototype = {
 	/**
 	 * 定義を(追加)読み込みする
-	 * @param desc
+	 * @param {Object} desc 定義記述
 	 *
 	 * * setter for this._default, _definition
 	 */
 	addDefinition: function(desc) {
-		this._loadCommonDefinition(desc);
-		this._loadDefinition(desc);
-	},
-
-	/**
-	 * 共通定義の名前
-	 * 実装クラスにて上書き前提
-	 */
-	COMMON_DEF_NAMES: [],
-
-	/**
-	 * 共通定義をロードする
-	 * 定義は実装クラスにて
-	 *
-	 * * setter for this._default
-	 */
-	_loadCommonDefinition: function(desc) {
-		if (desc != undefined) {
-			for (var i=0; i<this.COMMON_DEF_NAMES.length; i++) {
-				var key = this.COMMON_DEF_NAMES[i];
-//console.debug(key);
-//console.debug(this._default[key]);
-				var def_prop_name = this.PROP_NAMES[key];
-				var noramalized = this._normalize(desc[key], def_prop_name);
-				this._default[key] = overwrite(noramalized, this._default[key]);
-//console.debug(this._default[key]);
-			}
+//console.debug(desc);
+		try {
+			this._loadCommonDefinition(desc);
+			this._loadDefinition(desc);
+			this._setProps();
+		}
+		catch(e) {
+			console.warn(e);
 		}
 	},
 
 	/**
-	 * 有効な定義名とデフォルトプロパティ名
-	 * 実装クラスにて上書き前提
+	 * 共通定義をロードする
+	 *
+	 * * setter for this._default
 	 */
-	PROP_NAMES: {},
+	_loadCommonDefinition: function(desc) {
+		try {
+			if (desc != undefined) {
+				for (var i=0; i<this.COMMON_DEF_NAMES.length; i++) {
+					var key = this.COMMON_DEF_NAMES[i];
+//console.debug(key);
+//console.debug(this._default[key]);
+					var def_name = this.DEF_NAMES[key];
+					var normalized = this._normalize(desc[key], def_name);
+					this._default[key] = overwrite(normalized, this._default[key]);
+//console.debug(this._default[key]);
+				}
+			}
+		}
+		catch(e) {
+			console.warn(e);
+		}
+	},
 
 	/**
 	 * 定義をロードする
@@ -117,13 +147,19 @@ enchant.m3.Definition.prototype = {
 	 * * setter for this._definition
 	 */
 	_loadDefinition: function(desc) {
-		if (desc != undefined) {
-			for (var key in desc) {
-				var def_prop_name = this.PROP_NAMES[key];
-				if (def_prop_name != undefined) {
-					this._definition[key] = this._normalize(desc[key], def_prop_name);
+		try {
+			if (desc != undefined) {
+				for (var key in desc) {
+					var def_name = this.DEF_NAMES[key];
+					if (def_name != undefined) {
+						var normalized = this._normalize(desc[key], def_name);
+						this._definition[key] = overwrite(normalized, this._definition[key]);
+					}
 				}
 			}
+		}
+		catch(e) {
+			console.warn(e);
 		}
 	},
 
@@ -131,121 +167,101 @@ enchant.m3.Definition.prototype = {
 	 * 簡易定義/詳細定義の違いを吸収する。すなわち常に「詳細定義」が得られる
 	 *
 	 * @param def {Any} 定義内容
-	 * @param def_name {String} 簡易定義の時、マッピングされる定義名
+	 * @param def_name {String} 簡易定義の時、マッピングされる定義細目名
 	 *
 	 * * def -> noramalized
 	 */
 	_normalize: function(def, def_name) {
 		var normalized = {};
-
-		if (typeof(def) == 'string') {
-			if (def_name != undefined) {
-				normalized[def_name] = def;
+		try {
+			if (typeof(def) == 'string') {
+				if (def_name != undefined) {
+					normalized[def_name] = def;
+				}
+				else {
+					normalized = def;
+				}
+			}
+			else {
+				normalized = def;
 			}
 		}
-		else {
-			normalized = def;
+		catch(e) {
+			console.warn(e);
 		}
 		return normalized;
+	},
+
+	/**
+	 * * setter for this._props
+	 */
+	_setProps: function() {
+		try {
+			var images = this._definition.images;
+			for (var key in images) {
+				var value = images[key];
+				this._props[key] = overwrite(this._normalizeImage(value), this._props[key]);
+			}
+		}
+		catch(e) {
+			console.warn(e);
+		}
+	},
+
+	_normalizeImage: function(def) {
+		var normalized = {};
+		try {
+			if (typeof(def) == 'string') {
+				normalized[this.DEF_NAMES.images] = def;
+			}
+			else {
+				normalized = def;
+			}
+			normalized.url = getFullURL(normalized.img, this._default.current.location);
+		}
+		catch(e) {
+			console.warn(e);
+		}
+		return normalized;
+	},
+
+	/**
+	 * @returns 定義されている画像プロパティの一覧
+	 * ※ 画像ビューワでの利用を想定
+	 *
+	 * * getter for this._props
+	 */
+	_getImageList: function() {
+		return this._props;
 	}
 };
 
 /**
- * [ 画像定義 ]
- *  シナリオ中で使用される画像の定義
+ * [ 画像バンク ]
+ *  背景、イベントCGなど一枚絵の定義
  */
-enchant.m3.ImgBank = enchant.Class.create(enchant.m3.Definition, {
+enchant.m3.ImgBank = enchant.Class.create(enchant.m3.ImgDefinition, {
 	initialize: function(desc) {
-		Definition.call(this);
-
-		/**
-		 *
-		 */
-		this._defImg = {};
-
-		this._default = {
-			baseURL: { url: '' }
-		};
-
-		this.COMMON_DEF_NAMES = ['shots', 'baseURL'];
-
-		this.PROP_NAMES = {
-			baseURL: 'url',
-			images: 'default'
-		};
-
-		this.addDefinition(desc);
+		ImgDefinition.call(this, desc);
 	}
 });
 
 /**
- * ImgBank用の定義処理
- * @param desc
- *
- * * setter for this._default, _definition
- */
-enchant.m3.ImgBank.prototype.addDefinition = function(desc) {
-	this._loadCommonDefinition(desc);
-	this._loadDefinition(desc);
-	this._defImages();
-};
-
-/**
- * * setter for this._defImg
- */
-enchant.m3.ImgBank.prototype._defImages = function() {
-	var images = this._definition.images;
-	for (var key in images) {
-		var value = images[key];
-		this._defImg[key] = this._normalizeImage(value);
-	}
-};
-
-/**
- * 画像の簡易定義/詳細定義の違いを吸収する。すなわち常に「詳細定義」が得られる
- *
- * @param def {Any} 定義内容
- *
- * * def -> noramalized
- */
-enchant.m3.ImgBank.prototype._normalizeImage = function(def) {
-	var normalized = {};
-	if (typeof(def) == 'string') {
-		normalized = {
-			url: getFullURL(def, this._definition.baseURL.url),
-			fitScreen: true
-		};
-	}
-	else {
-		normalized = value;
-		normalized.url = getFullURL(def.img, this._definition.baseURL.url);
-	}
-	return normalized;
-};
-
-/**
- * 定義されている画像およびプロパティの一覧を返す
- * ※ 画像ビューワでの利用を想定
- *
- * * getter for this._defImg
- */
-enchant.m3.ImgBank.prototype._getImageList = function() {
-	return this._defImg;
-};
-
-/**
- * @returns 画像表示プロパティ一式
+ * @returns {Object} Player で必要とする画像表示プロパティ一式
  * このクラスのインスタンス名は"i"を推奨する　→ i.mg('キー')
  *
- * * getter for this._defImg
+ * * getter for this._props
  */
 enchant.m3.ImgBank.prototype.mg = function(key) {
-	return this._defImg[key];
+console.debug(this._props);
+	var prop = this._props[key];
+
+	prop.fitScreen = true;
+
+	return prop;
 };
 
 /**
- * TODO: flyweightパターンの適用でオブジェクト節約？
- *
  * [ キャラクター定義 ]
  *  シナリオ中に登場するキャラクターはすべてこのクラスのオブジェクトと
  *  なります。
@@ -253,7 +269,7 @@ enchant.m3.ImgBank.prototype.mg = function(key) {
  * @param {String} name
  *  コンストラクタの第一引数は'キャラクター名'です。
  *
- * @param {Object} definition
+ * @param {Object} desc
  *  第二引数に各定義を記述したオブジェクトを渡します。
  *
  *  images :
@@ -264,324 +280,368 @@ enchant.m3.ImgBank.prototype.mg = function(key) {
  *  Webサービス、M3Interface(@see http://m3itfc.appspot.com/)にて画像
  *  ライブラリを提供する予定です。
  */
-enchant.m3.Character = function(name, definition) {
-	/**
-	 * キャラクター名(識別子)
-	 * @type {String}
-	 */
-	this.id = name;
+enchant.m3.Character = enchant.Class.create(enchant.m3.ImgDefinition, {
+	initialize: function(name, desc) {
+		ImgDefinition.call(this);
 
-	/**
-	 * キャラクターが現在取っているポーズの名前
-	 * 画像ファイルを取得する際のキーとなる
-	 * @type {String}
-	 */
-	this.key = '';
+		/**
+		 * デフォルトの定義
+		 */
+		// this._default = {};
 
-	/**
-	 * キャラクターが現在取っているポーズの画像ファイルURL
-	 * @type {String}
-	 */
-	this.url = '';
+		/**
+		 * 共通定義の定義名
+		 */
+		this.COMMON_DEF_NAMES.push('shots');
 
-	/**
-	 * キャラクターのショット(表示範囲)
-	 * @see this.prototype.SHOT_TYPES
-	 * @type {String}
-	 */
-	this.shot_type = this.defaultShotType;
+		/**
+		 * 有効な定義名
+		 */
+		// this.DEF_NAMES = {};
 
-	/**
-	 * キャラクターの立ち位置＝X(横)軸方向の表示位置
-	 * @see this.prototype.POSITIONS
-	 * @type {Number}
-	 */
-	this.posX = this.POSITIONS.indexOf('CENTER');
+		/**
+		 * キャラクター名(識別子)
+		 * @type {String}
+		 */
+		this.id = name;
 
-	/**
-	 * キャラクターの表示位置オフセット
-	 * @type {Number}
-	 */
-	this.offsetX = 0;
-	this.offsetY = 0;
+		/**
+		 * キャラクターが現在取っているポーズの名前
+		 * 画像ファイルを取得する際のキーとなる
+		 * @type {String}
+		 */
+		this.key = '';
 
-	/**
-	 * メッセージウィンドウに表示されるキャラクター名
-	 * ※作中にて変更可能
-	 */
-	this.name = name;
+		/**
+		 * キャラクターが現在取っているポーズの画像ファイルURL
+		 * @type {String}
+		 */
+		this.url = '';
 
-	/**
-	 * キャラクターの現在の台詞
-	 */
-	this.msg = '';
+		/**
+		 * キャラクターの立ち位置＝X(横)軸方向の表示位置
+		 * X position of character
+		 *
+		 *   座標ではなく、ゲームスクリーン幅を等分割しての指定となります
+		 *   Not coordinates, it is ratio for screen width.
+		 *
+		 *   'LEFT_EDGE'はスクリーンの左端です。キャラ画像の中心＝左端のため、右半分だけが表示されることになります
+		 *   'LEFT_EDGE' is on left edge of screen. It shows right half of character.
+		 *
+		 *   'LEFT', 'CENTER', 'RIGHT'は画面にキャラが三人並んだ時のそれぞれの位置のイメージです
+		 *   'LEFT', 'CENTER' and 'RIGHT' is position in 3 person.
+		 *
+		 *   同様に、'LEFT2', 'RIGHT2'は二人並んだ時の位置のイメージとなります
+		 *   'LEFT2', 'RIGHT2' is postion in 2 person.
+		 */
+		this.POSITIONS = ['LEFT_EDGE', 'LEFT', 'LEFT2', 'CENTER', 'RIGHT2', 'RIGHT', 'RIGHT_EDGE'];
 
-	/**
-	 * キャラクター定義
-	 * @type {Object}
-	 */
-	this._baseURL = '';
-	this._defShots = {};
-	this._defImg = {};
-	this._addDefinition(definition);
+		/**
+		 * キャラクターの立ち位置＝X(横)軸方向の表示位置
+		 * @see this.prototype.POSITIONS
+		 * @type {Number}
+		 */
+		this.posX = this.POSITIONS.indexOf('CENTER');
 
-	/**
-	 * メソッドチェーンでプロパティを引き継ぐためのコピー
-	 */
-	this._self = this;
-};
-/*
- * メソッド名の命名ルール
- * - "_"から始ま“らない”メソッドはシナリオ中での利用を想定している
- */
-enchant.m3.Character.prototype = {
-	/**
-	 * キャラクターの立ち位置＝X(横)軸方向の表示位置
-	 * X position of character
-	 *
-	 *   座標ではなく、ゲームスクリーン幅を等分割しての指定となります
-	 *   Not coordinates, it is ratio for screen width.
-	 *
-	 *   'LEFT_EDGE'はスクリーンの左端です。キャラ画像の中心＝左端のため、右半分だけが表示されることになります
-	 *   'LEFT_EDGE' is on left edge of screen. It shows right half of character.
-	 *
-	 *   'LEFT', 'CENTER', 'RIGHT'は画面にキャラが三人並んだ時のそれぞれの位置のイメージです
-	 *   'LEFT', 'CENTER' and 'RIGHT' is position in 3 person.
-	 *
-	 *   同様に、'LEFT2', 'RIGHT2'は二人並んだ時の位置のイメージとなります
-	 *   'LEFT2', 'RIGHT2' is postion in 2 person.
-	 */
-	POSITIONS: ['LEFT_EDGE', 'LEFT', 'LEFT2', 'CENTER', 'RIGHT2', 'RIGHT', 'RIGHT_EDGE'],
+		/**
+		 * キャラクターの表示位置オフセット
+		 * @type {Number}
+		 */
+		this.offsetX = 0;
+		this.offsetY = 0;
 
-	/**
-	 * キャラクターのショット(表示範囲)
-	 *
-	 * cu: Close Up 顔(クローズアップ)
-	 * bs: Bust Shot 胸から上
-	 * ws: Waist Shot 腰から上
-	 * ks: Knee Shot ひざから上
-	 */
-	SHOT_TYPES: ['cu', 'bs', 'ws', 'ks'],
+		/**
+		 * メッセージウィンドウに表示されるキャラクター名
+		 * ※作中にて変更可能
+		 */
+		this.name = name;
 
-	/**
-	 * 指定がないときのショット
-	 */
-	defaultShotType: 'ws',
+		/**
+		 * キャラクターの現在の台詞
+		 */
+		this.msg = '';
 
-	/**
-	 * キャラ定義を追加/上書きします
-	 */
-	_addDefinition: function(definition) {
-		if (definition != undefined) {
-			if (definition.baseURL != undefined) {
-				this._baseURL = definition.baseURL;
-			}
-			if (definition.shots != undefined) {
-				this._defShots = overwrite(definition.shots, this._defShots);
-			}
+		/**
+		 * キャラクターのショット(表示範囲)
+		 *
+		 * cu: Close Up 顔(クローズアップ)
+		 * bs: Bust Shot 胸から上
+		 * ws: Waist Shot 腰から上
+		 * ks: Knee Shot ひざから上
+		 */
+		SHOT_TYPES = ['cu', 'bs', 'ws', 'ks'];
 
-			var def_images = definition.images;
-			if (def_images != undefined) {
-				// デフォルト値
-				var defs = {
-					baseURL: this._baseURL,
-					shots: this._defShots
-				};
-				for (key in def_images) {
-					// デフォルトのポーズ名設定
-					if (this.key == undefined || this.key.length == 0) this.key = key;
+		this.addDefinition(desc);
 
-					this._defImg[key] = overwrite(this._normalizeDefinition(def_images[key], defs), this._defImg[key]);
-				}
-			}
-		}
-	},
-
-	/**
-	 * キャラ定義を正規化します
-	 * ここでいう正規化とは、簡易定義も詳細定義も同じフォーマットにすることです
-	 *
-	 * [フォーマット]
-	 * - ポーズ名
-	 *   - ショット名
-	 *     - url
-	 *     - baseY
-	 *     - scale
-	 *
-	 * @param {Object} definition ポーズごとの定義
-	 * @param {Object} defs デフォルトの設定
-	 */
-	_normalizeDefinition: function(definition, defs) {
-		var def_pose = {};
-
-		for (var i=0; i<this.SHOT_TYPES.length; i++) {
-			var shot_type = this.SHOT_TYPES[i];
-			var def_shot = {};
-
-			// 共通のショット設定を適用する
-			if (defs.shots == undefined || defs.shots[shot_type] == undefined) {
-				def_shot = {};
-			} else {
-				// def_shot = clone(defs.shots[shot_type]);
-				def_shot = defs.shots[shot_type];
-			}
-
-			if (typeof(definition) == 'string') {
-				// 簡易的な定義
-				def_shot.url = getFullURL(definition, defs.baseURL);
-			}
-			else {
-				// 詳細な定義
-				def_shot.url = getFullURL(definition.img, defs.baseURL);
-				def_shot.keywords = definition.keywords;
-			}
-			def_pose[shot_type] = def_shot;
-		}
-
-		return def_pose;
-	},
-
-	/**
-	 * @returns キャラクタ表示プロパティ一式 character properties
-	 *
-	 *   key: ポーズ名
-	 *
-	 *   url: 画像URL(＝Game.assetsのキー)
-	 *        key of Game.assets
-	 *
-	 *   scale: 表示倍率。ショットによって異なる
-	 *
-	 *   ratioX: キャラクターのX(横)軸方向の表示位置　※画面幅に対する比率
-	 *         position of character
-	 *
-	 *   baseY: キャラクタ表示時、下限のY座標。ショットによって異なる
-	 *
-	 *   offsetX, offsetY: 表示位置のオフセット
-	 *                     position offset
-	 */
-	_getProps: function() {
-		var def = this._defImg[this.key][this.shot_type];
-
-		var url = '';
-		var scale = 1;
-		var baseY = 0;
-		// ↑FIXME: 簡易定義のときは画像の下端(height)にしたいのだが… shotsをコメントアウトして作成/検証
-		if (def != undefined) {
-			if (def.url != undefined) url = def.url;
-			if (def.scale != undefined) scale = def.scale;
-			if (def.baseY != undefined) baseY = def.baseY;
-		}
-		var props = {
-			key: this.key,
-			url: url,
-			scale: scale,
-			ratioX: this.posX / (this.POSITIONS.length - 1),
-			baseY: baseY,
-			offsetX: this.offsetX,
-			offsetY: this.offsetY
-		};
-		return props;
-	},
-
-	/**
-	 * @returns メッセージプロパティ一式 character words
-	 *
-	 *   name: メッセージウィンドウに表示されるときの名前
-	 *         name in message window
-	 *
-	 *   msg: メッセージウィンドウに表示される文章(＝セリフ)
-	 *        message in message window
-	 */
-	_getWords: function () {
-		var words = {
-			name: this.name,
-			msg: this.msg
-		};
-		return words;
-	},
-
-	/**
-	 * 定義されている画像およびプロパティの一覧を返す
-	 * ※ キャラクタービューワでの利用を想定
-	 */
-	_getImageList: function() {
-		return this._defImg;
-	},
-
-	/**
-	 * get shallow copy
-	 */
-	_clone: function() {
-		var cln = new Character();
-		for (var key in this._self) {
-			var value = this._self[key];
-			if (typeof(value) != 'function') {
-				cln[key] = value;
-			}
-		}
-		return cln;
-	},
-
-	say: function(msg) {
-		this.msg = this._self.msg = msg;
-		return this._clone();
-	},
-	as: function(name) {
-		this.name = this._self.name = name;
-		return this._clone();
-	},
-	is: function() {
-		return this._clone();
-	},
-	act: function(key) {
-		this.key = this._self.key = key;
-		return this._clone();
-	},
-	wiz: function(key) {
-		this.key = this._self.key = key;
-		return this._clone();
-	},
-	/**
-	 * left position with 3 person
-	 */
-	onLeft: function(offset) {
-		this.posX = this._self.posX = this.POSITIONS.indexOf('LEFT');
-		return this.withOffset(offset);
-	},
-	/**
-	 * left position with 2 person
-	 */
-	onLeft2: function(offset) {
-		this.posX = this._self.posX = this.POSITIONS.indexOf('LEFT2');
-		return this.withOffset(offset);
-	},
-	onCenter: function(offset) {
-		this.posX = this._self.posX = this.POSITIONS.indexOf('CENTER');
-		return this.withOffset(offset);
-	},
-	/**
-	 * right position with 3 person
-	 */
-	onRight: function(offset) {
-		this.posX = this._self.posX = this.POSITIONS.indexOf('RIGHT');
-		return this.withOffset(offset);
-	},
-	/**
-	 * right position with 2 person
-	 */
-	onRight2: function(offset) {
-		this.posX = this._self.posX = this.POSITIONS.indexOf('RIGHT2');
-		return this.withOffset(offset);
-	},
-	withOffset: function(x, y) {
-		if (x != undefined) {
-			this.offsetX = this._self.offsetX = x;
-		}
-		if (y != undefined) {
-			this.offsetY = this._self.offsetY = y;
-		}
-		return this._clone();
+		/**
+		 * メソッドチェーンでプロパティを引き継ぐためのコピー
+		 */
+		this._self = this;
 	}
+});
+
+/**
+ * Character用の定義処理
+ * @param desc
+ *
+ * * setter for this._default, _definition
+ */
+enchant.m3.Character.prototype.addDefinition = function(desc) {
+	this._loadCommonDefinition(desc);
+	this._loadDefinition(desc);
+	this._defImages();
+};
+
+/**
+ * * setter for this._props
+ */
+enchant.m3.Character.prototype._defImages = function() {
+	var images = this._definition.images;
+	for (var key in images) {
+		var value = images[key];
+		this._props[key] = this._normalizeImage(value);
+	}
+};
+
+//enchant.m3.Character.prototype = {
+//	/**
+//	 * キャラ定義を追加/上書きします
+//	 */
+//	_addDefinition: function(definition) {
+//		if (definition != undefined) {
+//			if (definition.baseURL != undefined) {
+//				this._baseURL = definition.baseURL;
+//			}
+//			if (definition.shots != undefined) {
+//				this._defShots = overwrite(definition.shots, this._defShots);
+//			}
+//
+//			var def_images = definition.images;
+//			if (def_images != undefined) {
+//				// デフォルト値
+//				var defs = {
+//					baseURL: this._baseURL,
+//					shots: this._defShots
+//				};
+//				for (key in def_images) {
+//					// デフォルトのポーズ名設定
+//					if (this.key == undefined || this.key.length == 0) this.key = key;
+//
+//					this._props[key] = overwrite(this._normalizeDefinition(def_images[key], defs), this._props[key]);
+//				}
+//			}
+//		}
+//	},
+//
+//	/**
+//	 * キャラ定義を正規化します
+//	 * ここでいう正規化とは、簡易定義も詳細定義も同じフォーマットにすることです
+//	 *
+//	 * [フォーマット]
+//	 * - ポーズ名
+//	 *   - ショット名
+//	 *     - url
+//	 *     - baseY
+//	 *     - scale
+//	 *
+//	 * @param {Object} definition ポーズごとの定義
+//	 * @param {Object} defs デフォルトの設定
+//	 */
+//	_normalizeDefinition: function(definition, defs) {
+//		var def_pose = {};
+//
+//		for (var i=0; i<this.SHOT_TYPES.length; i++) {
+//			var shot_type = this.SHOT_TYPES[i];
+//			var def_shot = {};
+//
+//			// 共通のショット設定を適用する
+//			if (defs.shots == undefined || defs.shots[shot_type] == undefined) {
+//				def_shot = {};
+//			} else {
+//				// def_shot = clone(defs.shots[shot_type]);
+//				def_shot = defs.shots[shot_type];
+//			}
+//
+//			if (typeof(definition) == 'string') {
+//				// 簡易的な定義
+//				def_shot.url = getFullURL(definition, defs.baseURL);
+//			}
+//			else {
+//				// 詳細な定義
+//				def_shot.url = getFullURL(definition.img, defs.baseURL);
+//				def_shot.keywords = definition.keywords;
+//			}
+//			def_pose[shot_type] = def_shot;
+//		}
+//
+//		return def_pose;
+//	},
+//
+//	/**
+//	 * @returns キャラクタ表示プロパティ一式 character properties
+//	 *
+//	 *   key: ポーズ名
+//	 *
+//	 *   url: 画像URL(＝Game.assetsのキー)
+//	 *        key of Game.assets
+//	 *
+//	 *   scale: 表示倍率。ショットによって異なる
+//	 *
+//	 *   ratioX: キャラクターのX(横)軸方向の表示位置　※画面幅に対する比率
+//	 *         position of character
+//	 *
+//	 *   baseY: キャラクタ表示時、下限のY座標。ショットによって異なる
+//	 *
+//	 *   offsetX, offsetY: 表示位置のオフセット
+//	 *                     position offset
+//	 */
+//	_getProps: function() {
+//		var def = this._props[this.key][this.shot_type];
+//
+//		var url = '';
+//		var scale = 1;
+//		var baseY = 0;
+//		// ↑FIXME: 簡易定義のときは画像の下端(height)にしたいのだが… shotsをコメントアウトして作成/検証
+//		if (def != undefined) {
+//			if (def.url != undefined) url = def.url;
+//			if (def.scale != undefined) scale = def.scale;
+//			if (def.baseY != undefined) baseY = def.baseY;
+//		}
+//		var props = {
+//			key: this.key,
+//			url: url,
+//			scale: scale,
+//			ratioX: this.posX / (this.POSITIONS.length - 1),
+//			baseY: baseY,
+//			offsetX: this.offsetX,
+//			offsetY: this.offsetY
+//		};
+//		return props;
+//	},
+//
+//	/**
+//	 * @returns メッセージプロパティ一式 character words
+//	 *
+//	 *   name: メッセージウィンドウに表示されるときの名前
+//	 *         name in message window
+//	 *
+//	 *   msg: メッセージウィンドウに表示される文章(＝セリフ)
+//	 *        message in message window
+//	 */
+//	_getWords: function () {
+//		var words = {
+//			name: this.name,
+//			msg: this.msg
+//		};
+//		return words;
+//	},
+//};
+//
+///**
+// * 画像の簡易定義/詳細定義の違いを吸収する。すなわち常に「詳細定義」が得られる
+// *
+// * @param def {Any} 定義内容
+// *
+// * * def -> noramalized
+// */
+//enchant.m3.Character.prototype._normalizeImage = function(def) {
+//	var normalized = {};
+//	if (typeof(def) == 'string') {
+//		normalized = {
+//			url: getFullURL(def, this._default.current.location),
+//			fitScreen: true
+//		};
+//	}
+//	else {
+//		normalized = value;
+//		normalized.url = getFullURL(def.img, this._default.current.location);
+//	}
+//	return normalized;
+//};
+
+/**
+ * get shallow copy
+ */
+enchant.m3.Character.prototype._clone = function() {
+	var cln = new Character();
+	for (var key in this._self) {
+		var value = this._self[key];
+		if (typeof(value) != 'function') {
+			cln[key] = value;
+		}
+	}
+	return cln;
+};
+
+enchant.m3.Character.prototype.say = function(msg) {
+	this.msg = this._self.msg = msg;
+	return this._clone();
+};
+
+enchant.m3.Character.prototype.as = function(name) {
+	this.name = this._self.name = name;
+	return this._clone();
+};
+
+enchant.m3.Character.prototype.is = function() {
+	return this._clone();
+};
+
+enchant.m3.Character.prototype.act = function(key) {
+	this.key = this._self.key = key;
+	return this._clone();
+};
+
+enchant.m3.Character.prototype.wiz = function(key) {
+	this.key = this._self.key = key;
+	return this._clone();
+};
+
+/**
+ * left position with 3 person
+ */
+enchant.m3.Character.prototype.onLeft = function(offset) {
+	this.posX = this._self.posX = this.POSITIONS.indexOf('LEFT');
+	return this.withOffset(offset);
+};
+
+/**
+ * left position with 2 person
+ */
+enchant.m3.Character.prototype.onLeft2 = function(offset) {
+	this.posX = this._self.posX = this.POSITIONS.indexOf('LEFT2');
+	return this.withOffset(offset);
+};
+
+enchant.m3.Character.prototype.onCenter = function(offset) {
+	this.posX = this._self.posX = this.POSITIONS.indexOf('CENTER');
+	return this.withOffset(offset);
+};
+
+/**
+ * right position with 3 person
+ */
+enchant.m3.Character.prototype.onRight = function(offset) {
+	this.posX = this._self.posX = this.POSITIONS.indexOf('RIGHT');
+	return this.withOffset(offset);
+};
+
+/**
+ * right position with 2 person
+ */
+enchant.m3.Character.prototype.onRight2 = function(offset) {
+	this.posX = this._self.posX = this.POSITIONS.indexOf('RIGHT2');
+	return this.withOffset(offset);
+};
+
+enchant.m3.Character.prototype.withOffset = function(x, y) {
+	if (x != undefined) {
+		this.offsetX = this._self.offsetX = x;
+	}
+	if (y != undefined) {
+		this.offsetY = this._self.offsetY = y;
+	}
+	return this._clone();
 };
 
 /**
@@ -688,6 +748,11 @@ enchant.m3.Player = function(scenario) {
 	if (scenario.eos != undefined) {
 		this.msg.suffix = scenario.eos;
 	}
+
+	/**
+	 * 指定がないときのショット
+	 */
+	this.defaultShotType = 'ws';
 
 	/**
 	 * 全シーケンス再生終了後に表示するメッセージ
@@ -1503,22 +1568,27 @@ enchant.m3.InputDialog.prototype.DUMMY = function() {
  */
 function getFullURL(url, baseURL) {
 	var fullURL = url;
-	if (url != undefined && typeof(url) == 'string' && url.length > 0) {
-		if (baseURL != undefined && typeof(baseURL) == 'string' && baseURL.length > 0) {
-			if (url.charAt(0) == '/') {
-				fullURL = url.substring(1, url.length);
-			}
-			if (baseURL.charAt(baseURL.length-1) != '/') {
-				baseURL = baseURL + '/';
-			}
+	try {
+		if (url != undefined && typeof(url) == 'string' && url.length > 0) {
+			if (baseURL != undefined && typeof(baseURL) == 'string' && baseURL.length > 0) {
+				if (url.charAt(0) == '/') {
+					fullURL = url.substring(1, url.length);
+				}
+				if (baseURL.charAt(baseURL.length-1) != '/') {
+					baseURL = baseURL + '/';
+				}
 
-			if (url.indexOf('://') > 0) {
-				// That url is 'full', so nothing to do.
-			}
-			else {
-				fullURL = baseURL + fullURL;
+				if (url.indexOf('://') > 0) {
+					// That url is 'full', so nothing to do.
+				}
+				else {
+					fullURL = baseURL + fullURL;
+				}
 			}
 		}
+	}
+	catch(e) {
+		console.warn(e);
 	}
 	return fullURL;
 }
@@ -1527,33 +1597,39 @@ function getFullURL(url, baseURL) {
  * @returns オブジェクトのコピー
  */
 function clone(src) {
-	if (src == undefined) {
-		src = this;
-	}
-	var cloned;
-	if (src != undefined) {
-		cloned = overwrite(src, {});
-	}
+	var cloned = overwrite(src, {});
 	return cloned;
 }
 
 /**
  * オブジェクトの内容を上書きする
+ * オブジェクト以外(typeof(src)!='object')も上書き出来るが、それはただの値置換
+ *
  * @param {Object} src 上書きするオブジェクト
  * @param {Object} target 上書きされるオブジェクト
  */
 function overwrite(src, target) {
-	if (src != undefined) {
-		if (target == undefined) target = {};
-		for (var key in src) {
-			var type = typeof(src[key]);
-			if (type == 'object') {
-				target[key] = overwrite(src[key], target[key]);
+	try {
+		if (src != undefined) {
+			if (typeof(src) == 'object') {
+				if (target == undefined) target = {};
+				for (var key in src) {
+					var type = typeof(src[key]);
+					if (type == 'object') {
+						target[key] = overwrite(src[key], target[key]);
+					}
+					else {
+						target[key] = src[key];
+					}
+				}
 			}
 			else {
-				target[key] = src[key];
+				target = src;
 			}
 		}
+	}
+	catch(e) {
+		console.warn(e);
 	}
 	return target;
 }
